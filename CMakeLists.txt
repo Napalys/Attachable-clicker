@@ -12,6 +12,10 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
+include_directories(clicker)
+add_subdirectory(clicker)
+
 add_executable(${PROJECT_NAME} main.cpp gui/mainwindow.cpp gui/mainwindow.h gui/mainwindow.ui)
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets)
-target_link_libraries(${PROJECT_NAME} clicker)
+target_link_libraries(${PROJECT_NAME} clicker_lib)
