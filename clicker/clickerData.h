@@ -3,11 +3,12 @@
 
 #include <cstdint>
 
-struct clickerData{
+struct clickerData {
     uint8_t key_code;
     uint32_t delay;
-    clickerData(uint8_t key_code,  uint32_t delay)
-        : key_code{key_code}, delay{delay} {};
+
+    clickerData(uint8_t key_code, uint32_t delay)
+            : key_code{key_code}, delay{delay} {};
 };
 
 #endif // CLICKERDATA_H

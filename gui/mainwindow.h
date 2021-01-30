@@ -9,13 +9,13 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
-class MainWindow : public QMainWindow
-{
-    Q_OBJECT
+class MainWindow : public QMainWindow {
+Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    explicit MainWindow(QWidget *parent = nullptr);
+
+    ~MainWindow() override;
 
 private slots:
 
@@ -23,12 +23,13 @@ private slots:
 
     void on_pushButton_PID_clicked();
 
-    std::vector<clickerData> retreiveClickToInvoke();
+    std::vector<clickerData> retrieveClickToInvoke();
 
-    HWND receiveHWND(const DWORD& dwProcessID, const std::string& processName);
+    HWND receiveHWND(const DWORD &dwProcessID, const std::string &processName);
 
 private:
     Ui::MainWindow *ui;
     Clicker clicker;
 };
+
 #endif // MAINWINDOW_H

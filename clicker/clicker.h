@@ -6,8 +6,7 @@
 #include <vector>
 #include <thread>
 
-class Clicker
-{
+class Clicker {
 private:
     HWND injectionWindow = nullptr;
     bool clickerStatus = false;
@@ -21,11 +20,11 @@ public:
 
     HWND getHWND();
 
-    bool getClickerStatus();
+    bool getClickerStatus() const;
 
     //void startClicking(const clickerData& data);
 
-    void initClickerThreads(std::vector<clickerData>& data);
+    void initClickerThreads(std::vector<clickerData> &data);
 
     void destroyClickerThreads();
 };
