@@ -4,6 +4,7 @@
 #include <iostream>
 #include "QMessageBox"
 #include <thread>
+#include <regex>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -33,16 +34,20 @@ std::vector<clickerData> MainWindow::retrieveClickToInvoke() {
     for (auto &cBox : l_checkboxes) {
         if (cBox->isChecked()) {
             for (auto &tBox : txtBoxes) {
-                // If check box with text edit line allign we && check box is enabled
-                // we create new data clicker obj
+                /// If check box with text edit line align we && check box is enabled
+                /// we create new data clicker obj
                 if (cBox->y() == tBox->y()) {
-                    keyEvents.emplace_back(currentKeyCode, tBox->text().toUInt());
+                    std::string keyNumber = std::regex_replace(tBox->accessibleName().toStdString(), std::regex(R"([\D])"), "");
+                    keyEvents.emplace_back(currentKeyCode, tBox->text().toUInt(), std::stoi(keyNumber) > 8);
                     break;
                 }
             }
         }
         currentKeyCode++;
     }
+#ifdef DEBUG
+    std::cout <<"Number of keys to inject:  " << keyEvents.size() << std::endl;
+#endif
     return keyEvents;
 }
 
@@ -54,10 +59,12 @@ void MainWindow::on_pushButton_Start_clicked() {
 
     if (!clicker.getClickerStatus()) {
         std::vector<clickerData> keyEvents = retrieveClickToInvoke();
+#ifdef DEBUG
         for (auto &ev : keyEvents) {
-            std::cout << ev.key_code << std::endl;
+            std::cout << ev.key_code << (ev.longClick ? " Long" : " Short") <<  std::endl;
         }
         std::cout << "----------" << std::endl;
+#endif
         clicker.setClickerStatus(true);
         ui->pushButton_Start->setText("Stop");
         clicker.initClickerThreads(keyEvents);
@@ -97,7 +104,7 @@ HWND MainWindow::receiveHWND(const DWORD &dwProcessID, const std::string &proces
         return nullptr;
     }
     std::string errorMessage;
-    //Throw error if proccess with such PID and name not found
+    //Throw error if process with such PID and name not found
     if (targetWindow == nullptr) {
 
         for (auto &hwnd : vhWnds) {

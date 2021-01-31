@@ -1,4 +1,8 @@
+#include <mutex>
+#include <iostream>
 #include "clicker.h"
+
+static std::mutex m;
 
 Clicker::Clicker() = default;
 
@@ -21,8 +25,22 @@ bool Clicker::getClickerStatus() const {
 void startClicking(const clickerData &data, Clicker *clicker) {
 
     while (clicker->getClickerStatus()) {
-        SendMessage(clicker->getHWND(), WM_KEYDOWN, data.key_code, 0);
-        Sleep(data.delay);
+        m.lock();
+        if(data.longClick) {
+            int counter = 0;
+            while (counter < 1000){
+                SendMessage(clicker->getHWND(), WM_KEYDOWN, data.key_code, 0);
+                Sleep(50);
+                counter += 50;
+            }
+            SendMessage(clicker->getHWND(), WM_KEYUP, data.key_code, 0);
+        }
+        else {
+            SendMessage(clicker->getHWND(), WM_KEYDOWN, data.key_code, 0);
+            SendMessage(clicker->getHWND(), WM_KEYUP, data.key_code, 0);
+        }
+        m.unlock();
+        Sleep(data.longClick? data.delay * 1000 : data.delay);
     }
 }
 
