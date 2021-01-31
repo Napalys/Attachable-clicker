@@ -26,6 +26,9 @@
       <height>17</height>
      </rect>
     </property>
+    <property name="accessibleName">
+     <string>check_F1</string>
+    </property>
     <property name="text">
      <string>F1</string>
     </property>
@@ -38,6 +41,9 @@
       <width>61</width>
       <height>20</height>
      </rect>
+    </property>
+    <property name="accessibleName">
+     <string>txtBox_F1</string>
     </property>
     <property name="text">
      <string>1111</string>
@@ -65,6 +71,9 @@
       <height>17</height>
      </rect>
     </property>
+    <property name="accessibleName">
+     <string>check_F2</string>
+    </property>
     <property name="text">
      <string>F2</string>
     </property>
@@ -91,6 +100,9 @@
       <height>20</height>
      </rect>
     </property>
+    <property name="accessibleName">
+     <string>txtBox_F2</string>
+    </property>
     <property name="text">
      <string>1122</string>
     </property>
@@ -103,6 +115,9 @@
       <width>41</width>
       <height>17</height>
      </rect>
+    </property>
+    <property name="accessibleName">
+     <string>check_F3</string>
     </property>
     <property name="text">
      <string>F3</string>
@@ -117,6 +132,9 @@
       <height>17</height>
      </rect>
     </property>
+    <property name="accessibleName">
+     <string>check_F4</string>
+    </property>
     <property name="text">
      <string>F4</string>
     </property>
@@ -129,6 +147,9 @@
       <width>61</width>
       <height>20</height>
      </rect>
+    </property>
+    <property name="accessibleName">
+     <string>txtBox_F4</string>
     </property>
     <property name="text">
      <string>1251</string>
@@ -169,6 +190,9 @@
       <height>20</height>
      </rect>
     </property>
+    <property name="accessibleName">
+     <string>txtBox_F3</string>
+    </property>
     <property name="text">
      <string>1520</string>
     </property>
@@ -181,6 +205,9 @@
       <width>41</width>
       <height>17</height>
      </rect>
+    </property>
+    <property name="accessibleName">
+     <string>check_F5</string>
     </property>
     <property name="text">
      <string>F5</string>
@@ -195,6 +222,9 @@
       <height>17</height>
      </rect>
     </property>
+    <property name="accessibleName">
+     <string>check_F6</string>
+    </property>
     <property name="text">
      <string>F6</string>
     </property>
@@ -207,6 +237,9 @@
       <width>61</width>
       <height>20</height>
      </rect>
+    </property>
+    <property name="accessibleName">
+     <string>txtBox_F6</string>
     </property>
     <property name="text">
      <string>6000</string>
@@ -247,6 +280,9 @@
       <height>20</height>
      </rect>
     </property>
+    <property name="accessibleName">
+     <string>txtBox_F5</string>
+    </property>
     <property name="text">
      <string>500</string>
     </property>
@@ -259,6 +295,9 @@
       <width>41</width>
       <height>17</height>
      </rect>
+    </property>
+    <property name="accessibleName">
+     <string>check_F7</string>
     </property>
     <property name="text">
      <string>F7</string>
@@ -273,6 +312,9 @@
       <height>17</height>
      </rect>
     </property>
+    <property name="accessibleName">
+     <string>check_F8</string>
+    </property>
     <property name="text">
      <string>F8</string>
     </property>
@@ -285,6 +327,9 @@
       <width>61</width>
       <height>20</height>
      </rect>
+    </property>
+    <property name="accessibleName">
+     <string>txtBox_F8</string>
     </property>
     <property name="text">
      <string>24522</string>
@@ -324,6 +369,9 @@
       <width>61</width>
       <height>20</height>
      </rect>
+    </property>
+    <property name="accessibleName">
+     <string>txtBox_F7</string>
     </property>
     <property name="text">
      <string>1500</string>
@@ -470,8 +518,11 @@
        <height>20</height>
       </rect>
      </property>
+     <property name="accessibleName">
+      <string>txtBox_F9</string>
+     </property>
      <property name="text">
-      <string>1111</string>
+      <string>30</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_F1_2">
@@ -496,6 +547,9 @@
        <height>17</height>
       </rect>
      </property>
+     <property name="accessibleName">
+      <string>check_F9</string>
+     </property>
      <property name="text">
       <string>F9</string>
      </property>
@@ -508,6 +562,9 @@
        <width>41</width>
        <height>17</height>
       </rect>
+     </property>
+     <property name="accessibleName">
+      <string>check_F10</string>
      </property>
      <property name="text">
       <string>F10</string>
@@ -535,8 +592,11 @@
        <height>20</height>
       </rect>
      </property>
+     <property name="accessibleName">
+      <string>txtBox_F10</string>
+     </property>
      <property name="text">
-      <string>1111</string>
+      <string>60</string>
      </property>
     </widget>
     <widget class="QCheckBox" name="checkBox_F11">
@@ -547,6 +607,9 @@
        <width>41</width>
        <height>17</height>
       </rect>
+     </property>
+     <property name="accessibleName">
+      <string>check_F11</string>
      </property>
      <property name="text">
       <string>F11</string>
@@ -574,8 +637,11 @@
        <height>20</height>
       </rect>
      </property>
+     <property name="accessibleName">
+      <string>txtBox_F11</string>
+     </property>
      <property name="text">
-      <string>1111</string>
+      <string>90</string>
      </property>
     </widget>
     <widget class="QCheckBox" name="checkBox_F12">
@@ -586,6 +652,9 @@
        <width>41</width>
        <height>17</height>
       </rect>
+     </property>
+     <property name="accessibleName">
+      <string>check_F12</string>
      </property>
      <property name="text">
       <string>F12</string>
@@ -613,8 +682,11 @@
        <height>20</height>
       </rect>
      </property>
+     <property name="accessibleName">
+      <string>txtBox_F12</string>
+     </property>
      <property name="text">
-      <string>1111</string>
+      <string>360</string>
      </property>
     </widget>
    </widget>

@@ -19,3 +19,10 @@ add_executable(${PROJECT_NAME} main.cpp gui/mainwindow.cpp gui/mainwindow.h gui/
 set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets)
 target_link_libraries(${PROJECT_NAME} clicker_lib)
+
+#Add macro for debug and release in order to optimize the release version
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC DEBUG)
+elseif (CMAKE_BUILD_TYPE MATCHES Release)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC RELEASE)
+endif ()
