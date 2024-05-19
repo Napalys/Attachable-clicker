@@ -1,30 +1,27 @@
 #ifndef CLICKER_H
 #define CLICKER_H
 
-#include <windows.h>
-#include "clickerData.h"
+#include "clicker_data.h"
+#include "process_handler/process_manager.h"
 #include <vector>
 #include <thread>
 
 class Clicker {
 private:
-    HWND injectionWindow = nullptr;
     bool clickerStatus = false;
     std::vector<std::thread> jobs{};
 public:
-    Clicker();
+    std::unique_ptr<ProcessHandler::ProcessManager> process_manager;
 
-    void setHWND(HWND hwnd);
+    Clicker(uint32_t dwProcessID, const std::string& processName);
 
     void setClickerStatus(bool status);
 
-    HWND getHWND();
-
-    bool getClickerStatus() const;
+    [[nodiscard]] bool getClickerStatus() const;
 
     //void startClicking(const clickerData& data);
 
-    void initClickerThreads(std::vector<clickerData> &data);
+    void initClickerThreads(std::vector<ClickerData> &data);
 
     void destroyClickerThreads();
 };

@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <windows.h>
 #include <iostream>
 #include "QMessageBox"
 #include <thread>
@@ -9,10 +8,7 @@
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent), ui(new Ui::MainWindow) {
-    clicker = Clicker();
-    clicker.setClickerStatus(false);
     ui->setupUi(this);
-
 }
 
 MainWindow::~MainWindow() {
@@ -23,21 +19,22 @@ void createErrorBox(const std::string &errorMsg) {
     QMessageBox::warning(nullptr, "Error", errorMsg.c_str());
 }
 
-std::vector<clickerData> MainWindow::retrieveClickToInvoke() {
+std::vector<ClickerData> MainWindow::retrieveClickToInvoke() {
     /// Retrieve check boxes from the GUI
     QList<QCheckBox *> l_checkboxes = this->findChildren<QCheckBox *>();
     /// Retrieve text boxes from GUI
     QList<QLineEdit *> txtBoxes = this->findChildren<QLineEdit *>();
-    std::vector<clickerData> keyEvents{};
+    std::vector<ClickerData> keyEvents{};
     /// Configure out clicker
     uint8_t currentKeyCode = 0x70;
-    for (auto &cBox : l_checkboxes) {
+    for (auto &cBox: l_checkboxes) {
         if (cBox->isChecked()) {
-            for (auto &tBox : txtBoxes) {
+            for (auto &tBox: txtBoxes) {
                 /// If check box with text edit line align we && check box is enabled
                 /// we create new data clicker obj
                 if (cBox->y() == tBox->y()) {
-                    std::string keyNumber = std::regex_replace(tBox->accessibleName().toStdString(), std::regex(R"([\D])"), "");
+                    std::string keyNumber = std::regex_replace(tBox->accessibleName().toStdString(),
+                                                               std::regex(R"([\D])"), "");
                     keyEvents.emplace_back(currentKeyCode, tBox->text().toUInt(), std::stoi(keyNumber) > 8);
                     break;
                 }
@@ -46,90 +43,40 @@ std::vector<clickerData> MainWindow::retrieveClickToInvoke() {
         currentKeyCode++;
     }
 #ifdef DEBUG
-    std::cout <<"Number of keys to inject:  " << keyEvents.size() << std::endl;
+    std::cout << "Number of keys to inject:  " << keyEvents.size() << std::endl;
 #endif
     return keyEvents;
 }
 
 void MainWindow::on_pushButton_Start_clicked() {
-    if (clicker.getHWND() == nullptr) {
+    if (!clicker) {
         createErrorBox("Please set up PID first");
         return;
     }
 
-    if (!clicker.getClickerStatus()) {
-        std::vector<clickerData> keyEvents = retrieveClickToInvoke();
+    if (!clicker->getClickerStatus()) {
+        std::vector<ClickerData> keyEvents = retrieveClickToInvoke();
 #ifdef DEBUG
-        for (auto &ev : keyEvents) {
-            std::cout << ev.key_code << (ev.longClick ? " Long" : " Short") <<  std::endl;
+        for (auto &ev: keyEvents) {
+            std::cout << ev.key_code << (ev.longClick ? " Long" : " Short") << std::endl;
         }
         std::cout << "----------" << std::endl;
 #endif
-        clicker.setClickerStatus(true);
+        clicker->setClickerStatus(true);
         ui->pushButton_Start->setText("Stop");
-        clicker.initClickerThreads(keyEvents);
+        clicker->initClickerThreads(keyEvents);
     } else {
-        clicker.setClickerStatus(false);
+        clicker->setClickerStatus(false);
         ui->pushButton_Start->setText("Start");
         QMessageBox::warning(nullptr, "Warning",
                              "Waiting for clicker to finish task, This may take up to max declared ms");
-        clicker.destroyClickerThreads();
+        clicker->destroyClickerThreads();
     }
 }
-
-HWND MainWindow::receiveHWND(const DWORD &dwProcessID, const std::string &processName) {
-    std::vector<HWND> vhWnds;
-    HWND targetWindow = nullptr;
-    /// Find all hWnds (vhWnds) associated with a process id (dwProcessID)
-    HWND hCurWnd = nullptr;
-    do {
-        hCurWnd = FindWindowEx(nullptr, hCurWnd, nullptr, nullptr);
-        DWORD checkProcessID = 0;
-        GetWindowThreadProcessId(hCurWnd, &checkProcessID);
-        if (checkProcessID == dwProcessID) {
-            vhWnds.emplace_back(hCurWnd);  // add the found hCurWnd to the vector
-
-            std::wstring title(GetWindowTextLength(hCurWnd) + 1, L'\0');
-            GetWindowTextW(hCurWnd, &title[0], title.size());
-            std::string str(title.begin(), title.end());
-            if (str.find(processName) != std::string::npos)
-                targetWindow = hCurWnd;
-
-        }
-    } while (hCurWnd != nullptr);
-
-    //Throw error is no processes found with such PID
-    if (vhWnds.empty()) {
-        createErrorBox("Wrong PID!");
-        return nullptr;
-    }
-    std::string errorMessage;
-    //Throw error if process with such PID and name not found
-    if (targetWindow == nullptr) {
-
-        for (auto &hwnd : vhWnds) {
-            std::wstring title(GetWindowTextLength(hwnd) + 1, L'\0');
-            GetWindowTextW(hwnd, &title[0], title.size());
-            std::cout << title.size() << std::endl;
-            std::string str(title.begin(), title.end());
-            //remove string terminator, thus after converting to char we do not lose data
-            str.erase(std::find(str.begin(), str.end(), '\0'), str.end());
-            if (title.size() > 1)
-                errorMessage += '\n' + str;
-        }
-        std::cout << errorMessage << std::endl;
-        createErrorBox("PID with such name not found. Did you mean? " + errorMessage);
-    } else {
-        return targetWindow;
-
-    }
-    return nullptr;
-}
-
 
 void MainWindow::on_pushButton_PID_clicked() {
     ///Retrieve PID from the text box
-    DWORD dwProcessID = ui->lineEdit_PID->text().toInt();
+    uint32_t dwProcessID = ui->lineEdit_PID->text().toInt();
 
     ///Retrieve name of PID
     std::string processName = ui->lineEdit_PID_2->text().toStdString();
@@ -139,20 +86,22 @@ void MainWindow::on_pushButton_PID_clicked() {
         createErrorBox("Incorrect PID, it can contain only numbers! Tittle cannot be empty");
         return;
     }
-    HWND hwnd = receiveHWND(dwProcessID, processName);
-    std::cout << hwnd << std::endl;
-    if (hwnd != nullptr) {
-        clicker.setHWND(hwnd);
-        ui->lineEdit_PID->setReadOnly(true);
-        ui->lineEdit_PID_2->setReadOnly(true);
-        auto *palette = new QPalette();
-        palette->setColor(QPalette::Base, Qt::gray);
-        palette->setColor(QPalette::Text, Qt::black);
-        ui->lineEdit_PID->setPalette(*palette);
-        ui->lineEdit_PID_2->setPalette(*palette);
-        ui->pushButton_PID->setEnabled(false);
-        ui->pushButton_PID->setAutoFillBackground(true);
-        ui->pushButton_PID->setStyleSheet("background-color: rgb(50, 165, 89); color: rgb(255, 255, 255)");
-        ui->pushButton_PID->setText("Success!");
+    try {
+        clicker = std::make_unique<Clicker>(dwProcessID, processName);
     }
+    catch (const std::exception &e) {
+        createErrorBox(std::string("PID with such name not found. Did you mean? ") + e.what());
+        return;
+    }
+    ui->lineEdit_PID->setReadOnly(true);
+    ui->lineEdit_PID_2->setReadOnly(true);
+    auto *palette = new QPalette();
+    palette->setColor(QPalette::Base, Qt::gray);
+    palette->setColor(QPalette::Text, Qt::black);
+    ui->lineEdit_PID->setPalette(*palette);
+    ui->lineEdit_PID_2->setPalette(*palette);
+    ui->pushButton_PID->setEnabled(false);
+    ui->pushButton_PID->setAutoFillBackground(true);
+    ui->pushButton_PID->setStyleSheet("background-color: rgb(50, 165, 89); color: rgb(255, 255, 255)");
+    ui->pushButton_PID->setText("Success!");
 }

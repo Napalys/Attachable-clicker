@@ -2,8 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "../clicker/clickerData.h"
-#include "../clicker/clicker.h"
+#include "clicker_data.h"
+#include "clicker.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -23,13 +23,13 @@ private slots:
 
     void on_pushButton_PID_clicked();
 
-    std::vector<clickerData> retrieveClickToInvoke();
+    std::vector<ClickerData> retrieveClickToInvoke();
 
-    HWND receiveHWND(const DWORD &dwProcessID, const std::string &processName);
+//    HWND receiveHWND(const DWORD &dwProcessID, const std::string &processName);
 
 private:
     Ui::MainWindow *ui;
-    Clicker clicker;
+    std::unique_ptr<Clicker> clicker = nullptr;
 };
 
 #endif // MAINWINDOW_H

@@ -15,7 +15,7 @@ SOURCES += \
 
 HEADERS += \
     clicker.h \
-    clickerData.h \
+    ClickerData.h \
     mainwindow.h
 
 FORMS += \
