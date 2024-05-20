@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include <iostream>
 #include "QMessageBox"
+#include "process_handler/keyboard_callback.h"
 #include <thread>
 #include <regex>
 
@@ -35,8 +36,8 @@ std::vector<ClickerData> MainWindow::retrieveClickToInvoke() {
                 if (cBox->y() == tBox->y()) {
                     std::string keyNumber = std::regex_replace(tBox->accessibleName().toStdString(),
                                                                std::regex(R"([\D])"), "");
-                    keyEvents.emplace_back(currentKeyCode, tBox->text().toUInt(), ClickerData::Event::Pressed);
-                    keyEvents.emplace_back(currentKeyCode, 100, ClickerData::Event::Released);
+                    keyEvents.emplace_back(currentKeyCode, tBox->text().toUInt(), ClickerData::Event::Pressed, "");
+                    keyEvents.emplace_back(currentKeyCode, 100, ClickerData::Event::Released, " ");
                     break;
                 }
             }
@@ -75,35 +76,47 @@ void MainWindow::on_pushButton_Start_clicked() {
     }
 }
 
-void MainWindow::addRowToTable(const QString &key, int delay) {
+void MainWindow::addRowToTable(const ClickerData& data) {
     int row = ui->tableWidget->rowCount();
     ui->tableWidget->insertRow(row);
+    auto *name = new QTableWidgetItem(QString(data.key_name.data()));
+    ui->tableWidget->setItem(row, 0, name);
 
-    auto *keyItem = new QTableWidgetItem(key);
-    ui->tableWidget->setItem(row, 0, keyItem);
+    auto *keyItem = new QTableWidgetItem(QString::number(data.key_code));
+    ui->tableWidget->setItem(row, 1, keyItem);
 
     // Create new QTableWidgetItem for the 'Delay'
-    auto *delayItem = new QTableWidgetItem(QString::number(delay));
-    ui->tableWidget->setItem(row, 1, delayItem);
+    auto *delayItem = new QTableWidgetItem(QString::number(data.delay));
+    ui->tableWidget->setItem(row, 2, delayItem);
+
+    auto *action = new QTableWidgetItem(data.event == ClickerData::Event::Pressed ? "Pressed" : "Released");
+    ui->tableWidget->setItem(row, 3, action);
 }
 
 void MainWindow::on_select_PID_clicked() {
-    addRowToTable("F1", 100);
     std::cout << "on_select_PID_clicked select" << std::endl;
 }
 
 void MainWindow::on_button_record_clicked() {
     if (isRecording) {
+        ProcessHandler::removeCallBack();
         ui->button_record->setStyleSheet("");
         ui->button_record->setText("Record Key strokes");
         std::cout << "on_button_record_clicked unselect" << std::endl;
     } else {
+        try {
+            ProcessHandler::registerCallBack([&](const ClickerData& data){
+                addRowToTable(data);
+            });
+        }
+        catch (const std::exception &e) {
+            createErrorBox(e.what());
+            return;
+        }
         ui->button_record->setStyleSheet("background-color: rgb(220, 20, 60); color: rgb(255, 255, 255)");
         ui->button_record->setText("Stop recording");
         std::cout << "on_button_record_clicked select" << std::endl;
     }
-
-    // Toggle the state
     isRecording = !isRecording;
 }
 

@@ -711,16 +711,21 @@
      <rect>
       <x>570</x>
       <y>150</y>
-      <width>361</width>
+      <width>411</width>
       <height>192</height>
      </rect>
     </property>
     <property name="minimumSize">
      <size>
-      <width>361</width>
+      <width>411</width>
       <height>0</height>
      </size>
     </property>
+    <column>
+     <property name="text">
+      <string>Name</string>
+     </property>
+    </column>
     <column>
      <property name="text">
       <string>Key</string>
@@ -728,14 +733,19 @@
     </column>
     <column>
      <property name="text">
-      <string>Delay</string>
+      <string>Delay ms</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Action</string>
      </property>
     </column>
    </widget>
    <widget class="QPushButton" name="button_record">
     <property name="geometry">
      <rect>
-      <x>640</x>
+      <x>680</x>
       <y>370</y>
       <width>171</width>
       <height>34</height>
