@@ -21,18 +21,9 @@ void startClicking(const ClickerData &data, Clicker *clicker) {
     using namespace std::chrono_literals;
     while (clicker->getClickerStatus()) {
         m.lock();
-        if (data.longClick) {
-            int counter = 0;
-            while (counter < 1000) {
-                clicker->process_manager->sendClick(data);
-                std::this_thread::sleep_for(50ms);
-                counter += 50;
-            }
-        } else {
-            clicker->process_manager->sendClick(data);
-        }
+        clicker->process_manager->sendClick(data);
         m.unlock();
-        std::this_thread::sleep_for(std::chrono::milliseconds(data.longClick ? data.delay * 1000 : data.delay));
+        std::this_thread::sleep_for(std::chrono::milliseconds(data.delay));
     }
 }
 

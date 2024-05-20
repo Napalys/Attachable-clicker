@@ -35,7 +35,8 @@ std::vector<ClickerData> MainWindow::retrieveClickToInvoke() {
                 if (cBox->y() == tBox->y()) {
                     std::string keyNumber = std::regex_replace(tBox->accessibleName().toStdString(),
                                                                std::regex(R"([\D])"), "");
-                    keyEvents.emplace_back(currentKeyCode, tBox->text().toUInt(), std::stoi(keyNumber) > 8);
+                    keyEvents.emplace_back(currentKeyCode, tBox->text().toUInt(), ClickerData::Event::Pressed);
+                    keyEvents.emplace_back(currentKeyCode, 100, ClickerData::Event::Released);
                     break;
                 }
             }
@@ -58,7 +59,7 @@ void MainWindow::on_pushButton_Start_clicked() {
         std::vector<ClickerData> keyEvents = retrieveClickToInvoke();
 #ifdef DEBUG
         for (auto &ev: keyEvents) {
-            std::cout << ev.key_code << (ev.longClick ? " Long" : " Short") << std::endl;
+            std::cout << ev.key_code << "Short" << std::endl;
         }
         std::cout << "----------" << std::endl;
 #endif
@@ -73,6 +74,40 @@ void MainWindow::on_pushButton_Start_clicked() {
         clicker->destroyClickerThreads();
     }
 }
+
+void MainWindow::addRowToTable(const QString &key, int delay) {
+    int row = ui->tableWidget->rowCount();
+    ui->tableWidget->insertRow(row);
+
+    auto *keyItem = new QTableWidgetItem(key);
+    ui->tableWidget->setItem(row, 0, keyItem);
+
+    // Create new QTableWidgetItem for the 'Delay'
+    auto *delayItem = new QTableWidgetItem(QString::number(delay));
+    ui->tableWidget->setItem(row, 1, delayItem);
+}
+
+void MainWindow::on_select_PID_clicked() {
+    addRowToTable("F1", 100);
+    std::cout << "on_select_PID_clicked select" << std::endl;
+}
+
+void MainWindow::on_button_record_clicked() {
+    if (isRecording) {
+        ui->button_record->setStyleSheet("");
+        ui->button_record->setText("Record Key strokes");
+        std::cout << "on_button_record_clicked unselect" << std::endl;
+    } else {
+        ui->button_record->setStyleSheet("background-color: rgb(220, 20, 60); color: rgb(255, 255, 255)");
+        ui->button_record->setText("Stop recording");
+        std::cout << "on_button_record_clicked select" << std::endl;
+    }
+
+    // Toggle the state
+    isRecording = !isRecording;
+}
+
+
 
 void MainWindow::on_pushButton_PID_clicked() {
     ///Retrieve PID from the text box

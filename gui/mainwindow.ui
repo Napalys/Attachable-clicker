@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>280</width>
+    <width>1091</width>
     <height>615</height>
    </rect>
   </property>
@@ -15,6 +15,9 @@
   </property>
   <property name="windowTitle">
    <string>Injection Clicker</string>
+  </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QCheckBox" name="checkBox_F1">
@@ -381,13 +384,26 @@
     <property name="geometry">
      <rect>
       <x>140</x>
-      <y>30</y>
+      <y>25</y>
       <width>75</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
      <string>Set PID</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="select_PID">
+    <property name="geometry">
+     <rect>
+      <x>140</x>
+      <y>50</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Select Win</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="lineEdit_PID">
@@ -437,22 +453,6 @@
     </property>
     <property name="text">
      <string>Tittle</string>
-    </property>
-   </widget>
-   <widget class="QGroupBox" name="groupBox">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>0</y>
-      <width>241</width>
-      <height>81</height>
-     </rect>
-    </property>
-    <property name="title">
-     <string>Window Handler</string>
     </property>
    </widget>
    <widget class="QGroupBox" name="groupBox_2">
@@ -690,8 +690,63 @@
      </property>
     </widget>
    </widget>
-   <zorder>groupBox_2</zorder>
+   <widget class="QGroupBox" name="groupBox">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>0</y>
+      <width>241</width>
+      <height>81</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Window Handler</string>
+    </property>
+   </widget>
+   <widget class="QTableWidget" name="tableWidget">
+    <property name="geometry">
+     <rect>
+      <x>570</x>
+      <y>150</y>
+      <width>361</width>
+      <height>192</height>
+     </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>361</width>
+      <height>0</height>
+     </size>
+    </property>
+    <column>
+     <property name="text">
+      <string>Key</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Delay</string>
+     </property>
+    </column>
+   </widget>
+   <widget class="QPushButton" name="button_record">
+    <property name="geometry">
+     <rect>
+      <x>640</x>
+      <y>370</y>
+      <width>171</width>
+      <height>34</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Record Key strokes</string>
+    </property>
+   </widget>
    <zorder>groupBox</zorder>
+   <zorder>groupBox_2</zorder>
    <zorder>checkBox_F1</zorder>
    <zorder>lineEdit_F1</zorder>
    <zorder>label_F1</zorder>
@@ -716,22 +771,25 @@
    <zorder>label_F8</zorder>
    <zorder>label_F7</zorder>
    <zorder>lineEdit_F7</zorder>
-   <zorder>pushButton_PID</zorder>
-   <zorder>lineEdit_PID</zorder>
    <zorder>label_PID</zorder>
-   <zorder>lineEdit_PID_2</zorder>
    <zorder>label_PID_2</zorder>
    <zorder>label</zorder>
-   <zorder>pushButton_Start</zorder>
    <zorder>groupBox_3</zorder>
+   <zorder>pushButton_PID</zorder>
+   <zorder>select_PID</zorder>
+   <zorder>pushButton_Start</zorder>
+   <zorder>lineEdit_PID</zorder>
+   <zorder>lineEdit_PID_2</zorder>
+   <zorder>tableWidget</zorder>
+   <zorder>button_record</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>280</width>
-     <height>21</height>
+     <width>1091</width>
+     <height>30</height>
     </rect>
    </property>
   </widget>

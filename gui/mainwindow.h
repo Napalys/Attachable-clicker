@@ -22,6 +22,9 @@ private slots:
     void on_pushButton_Start_clicked();
 
     void on_pushButton_PID_clicked();
+    void on_select_PID_clicked();
+    void on_button_record_clicked();
+    void addRowToTable(const QString &key, int delay);  // Function to add rows
 
     std::vector<ClickerData> retrieveClickToInvoke();
 
@@ -30,6 +33,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     std::unique_ptr<Clicker> clicker = nullptr;
+    bool isRecording = false;
 };
 
 #endif // MAINWINDOW_H
