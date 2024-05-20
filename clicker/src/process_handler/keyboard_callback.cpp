@@ -6,18 +6,20 @@
 
 #include <iostream>
 #include <fcntl.h>
-#ifdef linux
-#include <libevdev/libevdev.h>
-#endif
 #include <unistd.h>
 #include <dirent.h>
 #include <cstring>
 #include <string>
 #include <thread>
+
 #ifdef WIN32
 #include <windows.h>
 #endif
+#ifdef linux
 
+#include <libevdev/libevdev.h>
+
+#endif
 
 namespace ProcessHandler {
 
@@ -25,6 +27,7 @@ namespace ProcessHandler {
     static bool keyboard_registered = false;
 
 #ifdef linux
+
     int open_keyboard_device() {
         const char *dir_name = "/dev/input";
         struct dirent *entry;
@@ -116,6 +119,7 @@ namespace ProcessHandler {
 
         t.detach();
     }
+
 #endif
 #ifdef WIN32
     HHOOK hKeyboardHook;
@@ -133,24 +137,15 @@ namespace ProcessHandler {
         if (nCode == HC_ACTION) {
             KBDLLHOOKSTRUCT *pKeyBoard = (KBDLLHOOKSTRUCT *)lParam;
             if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN || wParam == WM_KEYUP || wParam == WM_SYSKEYUP) {
-                // Get the key code
                 DWORD vkCode = pKeyBoard->vkCode;
-
-                // Get the current time
                 auto currentKeyPressTime = std::chrono::steady_clock::now();
 
-                // Calculate the time difference from the last key press
                 auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(currentKeyPressTime - lastKeyPressTime).count();
-                std::cout << "Delay since last key press: " << delay << " ms\n";
                 const auto keyEvent = (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) ? ClickerData::Event::Pressed : ClickerData::Event::Released;
 
                 ClickerData clickerData(vkCode, static_cast<uint32_t>(delay), keyEvent, GetKeyName(vkCode));
                 callback(clickerData);
-                // Update the last key press time
                 lastKeyPressTime = currentKeyPressTime;
-
-                // Print the key code
-                std::cout << "Key Pressed: " << vkCode << std::endl;
             }
         }
         return CallNextHookEx(hKeyboardHook, nCode, wParam, lParam);
@@ -158,7 +153,7 @@ namespace ProcessHandler {
 
     void SetHook() {
         if (!(hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, GetModuleHandle(NULL), 0))) {
-            std::cerr << "Failed to install hook!" << std::endl;
+           throw std::runtime_error("Failed to find keyboard, software might be missing admin privileges");
         }
     }
 
@@ -190,7 +185,6 @@ namespace ProcessHandler {
 
         }
         callback = cb;
-
     }
 
     void removeCallBack() {
