@@ -39,3 +39,15 @@ void Clicker::destroyClickerThreads() {
     }
     jobs.clear();
 }
+
+void Clicker::addRoutine(std::vector<ClickerData> routine) {
+    routines.emplace_back(process_manager, std::move(routine));
+}
+
+void Clicker::startRoutines() noexcept {
+    for(auto& routine : routines) routine.startRoutine();
+}
+
+void Clicker::stopRoutines() noexcept {
+    routines.clear();
+}

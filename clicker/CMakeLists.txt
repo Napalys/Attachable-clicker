@@ -6,6 +6,8 @@ set(HEADER_FILES include/clicker_data.h include/clicker.h
         include/process_handler/windows_process_manager.h
         include/process_handler/process_manager.h
         include/process_handler/keyboard_callback.h
+        src/routine.cpp
+        include/routine.h
 )
 
 set(SOURCE_FILES src/clicker.cpp

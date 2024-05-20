@@ -76,6 +76,30 @@ void MainWindow::on_pushButton_Start_clicked() {
     }
 }
 
+std::vector<ClickerData> MainWindow::extractAllDataFromTable() {
+    std::vector<ClickerData> allData;
+    int rowCount = ui->tableWidget->rowCount();
+
+    for (int i = 0; i < rowCount; ++i) {
+        ClickerData data;
+        QTableWidgetItem* nameItem = ui->tableWidget->item(i, 0);
+        QTableWidgetItem* keyItem = ui->tableWidget->item(i, 1);
+        QTableWidgetItem* delayItem = ui->tableWidget->item(i, 2);
+        QTableWidgetItem* actionItem = ui->tableWidget->item(i, 3);
+
+        if (nameItem) data.key_name = nameItem->text().toStdString();
+        if (keyItem) data.key_code = keyItem->text().toInt();
+        if (delayItem) data.delay = delayItem->text().toInt();
+        if (actionItem) {
+            std::string action = actionItem->text().toStdString();
+            data.event = (action == "Pressed") ? ClickerData::Event::Pressed : ClickerData::Event::Released;
+        }
+        allData.push_back(data);
+    }
+
+    return allData;
+}
+
 void MainWindow::addRowToTable(const ClickerData& data) {
     int row = ui->tableWidget->rowCount();
     ui->tableWidget->insertRow(row);
@@ -94,6 +118,7 @@ void MainWindow::addRowToTable(const ClickerData& data) {
 }
 
 void MainWindow::on_select_PID_clicked() {
+    extractAllDataFromTable();
     std::cout << "on_select_PID_clicked select" << std::endl;
 }
 

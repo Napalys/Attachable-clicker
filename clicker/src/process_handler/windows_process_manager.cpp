@@ -51,8 +51,8 @@ namespace ProcessHandler {
     }
 
     void WindowsProcessManager::sendClick(ClickerData clicker_data) {
-        SendMessage(hwnd, WM_KEYDOWN, clicker_data.key_code, 0);
-        SendMessage(hwnd, WM_KEYUP, clicker_data.key_code, 0);
+        const auto action = (clicker_data.event == ClickerData::Event::Pressed) ? WM_KEYDOWN : WM_KEYUP;
+        SendMessage(hwnd, action, clicker_data.key_code, 0);
     }
 
 

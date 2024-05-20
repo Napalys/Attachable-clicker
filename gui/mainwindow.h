@@ -25,6 +25,8 @@ private slots:
     void on_select_PID_clicked();
     void on_button_record_clicked();
     void addRowToTable(const ClickerData& data);  // Function to add rows
+    std::vector<ClickerData> extractAllDataFromTable();
+
 
     std::vector<ClickerData> retrieveClickToInvoke();
 
