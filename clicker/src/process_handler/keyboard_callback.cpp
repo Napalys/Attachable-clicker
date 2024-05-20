@@ -6,18 +6,25 @@
 
 #include <iostream>
 #include <fcntl.h>
+#ifdef linux
 #include <libevdev/libevdev.h>
+#endif
 #include <unistd.h>
 #include <dirent.h>
 #include <cstring>
 #include <string>
 #include <thread>
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 
 namespace ProcessHandler {
 
     static KeyboardCallback callback = nullptr;
     static bool keyboard_registered = false;
 
+#ifdef linux
     int open_keyboard_device() {
         const char *dir_name = "/dev/input";
         struct dirent *entry;
@@ -109,9 +116,60 @@ namespace ProcessHandler {
 
         t.detach();
     }
+#endif
+#ifdef WIN32
+    HHOOK hKeyboardHook;
+    std::chrono::time_point<std::chrono::steady_clock> lastKeyPressTime;
+
+    std::string GetKeyName(DWORD vkCode) {
+        char name[128];
+        if (GetKeyNameTextA(MapVirtualKeyA(vkCode, 0) << 16, name, sizeof(name)) > 0) {
+            return std::string(name);
+        }
+        return "Unknown";
+    }
+
+    LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
+        if (nCode == HC_ACTION) {
+            KBDLLHOOKSTRUCT *pKeyBoard = (KBDLLHOOKSTRUCT *)lParam;
+            if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN || wParam == WM_KEYUP || wParam == WM_SYSKEYUP) {
+                // Get the key code
+                DWORD vkCode = pKeyBoard->vkCode;
+
+                // Get the current time
+                auto currentKeyPressTime = std::chrono::steady_clock::now();
+
+                // Calculate the time difference from the last key press
+                auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(currentKeyPressTime - lastKeyPressTime).count();
+                std::cout << "Delay since last key press: " << delay << " ms\n";
+                const auto keyEvent = (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) ? ClickerData::Event::Pressed : ClickerData::Event::Released;
+
+                ClickerData clickerData(vkCode, static_cast<uint32_t>(delay), keyEvent, GetKeyName(vkCode));
+                callback(clickerData);
+                // Update the last key press time
+                lastKeyPressTime = currentKeyPressTime;
+
+                // Print the key code
+                std::cout << "Key Pressed: " << vkCode << std::endl;
+            }
+        }
+        return CallNextHookEx(hKeyboardHook, nCode, wParam, lParam);
+    }
+
+    void SetHook() {
+        if (!(hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, GetModuleHandle(NULL), 0))) {
+            std::cerr << "Failed to install hook!" << std::endl;
+        }
+    }
+
+    void ReleaseHook() {
+        UnhookWindowsHookEx(hKeyboardHook);
+    }
+#endif
 
     void registerCallBack(const KeyboardCallback &cb) {
         if (!keyboard_registered) {
+#ifdef linux
             auto fd = open_keyboard_device();
             if (fd == -1)
                 throw std::runtime_error("Failed to find keyboard, software might be missing admin privileges");
@@ -121,8 +179,15 @@ namespace ProcessHandler {
                 close(fd);
                 throw std::runtime_error("Failed to find keyboard, software might be missing admin privileges");
             }
-            keyboard_registered = true;
             startListening(fd, dev);
+#endif
+#ifdef WIN32
+            lastKeyPressTime = std::chrono::steady_clock::now();
+            SetHook();
+            MSG msg;
+#endif
+            keyboard_registered = true;
+
         }
         callback = cb;
 
@@ -131,5 +196,8 @@ namespace ProcessHandler {
     void removeCallBack() {
         callback = nullptr;
         keyboard_registered = false;
+#ifdef WIN32
+        ReleaseHook();
+#endif
     }
 }
