@@ -57,7 +57,7 @@ void MainWindow::on_pushButton_Start_clicked() {
     }
 
     if (!clicker->getClickerStatus()) {
-        std::vector<ClickerData> keyEvents = retrieveClickToInvoke();
+        std::vector<ClickerData> keyEvents = extractAllDataFromTable();
 #ifdef DEBUG
         for (auto &ev: keyEvents) {
             std::cout << ev.key_code << "Short" << std::endl;
