@@ -5,11 +5,88 @@
 #include "process_handler/keyboard_callback.h"
 #include <thread>
 #include <regex>
+#include <QItemDelegate>
+#include <QStyledItemDelegate>
+#include <QComboBox>
+
+class NumericDelegate : public QItemDelegate {
+public:
+    explicit NumericDelegate(QObject *parent = nullptr) : QItemDelegate(parent) {}
+
+    QWidget* createEditor(QWidget *parent, const QStyleOptionViewItem&,
+                          const QModelIndex&) const override {
+        auto* editor = new QLineEdit(parent);
+        editor->setValidator(new QIntValidator(0, 100000, editor));
+        return editor;
+    }
+};
+
+class NonEditableDelegate : public QItemDelegate {
+public:
+    explicit NonEditableDelegate(QObject *parent = nullptr) : QItemDelegate(parent) {}
+
+    QWidget* createEditor(QWidget *, const QStyleOptionViewItem &, const QModelIndex &) const override {
+        return nullptr;
+    }
+};
+
+class ActionDelegate : public QStyledItemDelegate {
+public:
+    explicit ActionDelegate(QObject *parent = nullptr) : QStyledItemDelegate(parent) {}
+
+    QWidget* createEditor(QWidget *parent, const QStyleOptionViewItem &option,
+                          const QModelIndex &index) const override {
+        Q_UNUSED(option);
+        Q_UNUSED(index);
+        auto *editor = new QComboBox(parent);
+        editor->addItem("Pressed");
+        editor->addItem("Released");
+        return editor;
+    }
+
+    void setEditorData(QWidget *editor, const QModelIndex &index) const override {
+        QString value = index.model()->data(index, Qt::EditRole).toString();
+        auto *comboBox = dynamic_cast<QComboBox*>(editor);
+        comboBox->setCurrentIndex(comboBox->findText(value));
+    }
+
+    void setModelData(QWidget *editor, QAbstractItemModel *model,
+                      const QModelIndex &index) const override {
+        auto *comboBox = dynamic_cast<QComboBox*>(editor);
+        model->setData(index, comboBox->currentText(), Qt::EditRole);
+    }
+
+    void updateEditorGeometry(QWidget *editor,
+                              const QStyleOptionViewItem &option, const QModelIndex &index) const override {
+        Q_UNUSED(index);
+        editor->setGeometry(option.rect);
+    }
+};
+
+void setupTable(QTableWidget* table) {
+    table->setColumnCount(4);
+    QStringList headers = {"Name", "Key", "Delay ms", "Action"};
+    table->setHorizontalHeaderLabels(headers);
+
+    auto* nonEditableDelegate = new NonEditableDelegate(table);
+    table->setItemDelegateForColumn(0, nonEditableDelegate);
+    table->setItemDelegateForColumn(1, nonEditableDelegate);
+
+    auto* numericDelegate = new NumericDelegate(table);
+    table->setItemDelegateForColumn(2, numericDelegate);
+
+    auto* actionDelegate = new ActionDelegate(table);
+    table->setItemDelegateForColumn(3, actionDelegate);
+    table->verticalHeader()->hide();
+}
+
 
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
+    ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    setupTable(ui->tableWidget);
 }
 
 MainWindow::~MainWindow() {
@@ -109,7 +186,6 @@ void MainWindow::addRowToTable(const ClickerData& data) {
     auto *keyItem = new QTableWidgetItem(QString::number(data.key_code));
     ui->tableWidget->setItem(row, 1, keyItem);
 
-    // Create new QTableWidgetItem for the 'Delay'
     auto *delayItem = new QTableWidgetItem(QString::number(data.delay));
     ui->tableWidget->setItem(row, 2, delayItem);
 

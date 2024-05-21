@@ -19,6 +19,70 @@
   <property name="autoFillBackground">
    <bool>false</bool>
   </property>
+  <property name="styleSheet">
+   <string notr="true">/* Style for the main window or central widget */
+QWidget {
+    background-color: #222; /* Very dark grey background for the entire window */
+    color: #ddd; /* Light grey text for readability */
+}
+
+/* Existing table widget styles */
+QTableWidget {
+    border: 1px solid #333;
+    background-color: #222;
+    color: #ddd;
+    gridline-color: #444;
+}
+
+QTableWidget::item {
+    padding: 8px;
+    background-color: #222;
+    color: #ddd;
+    border-color: #444;
+}
+
+QTableWidget::item:selected {
+    background-color: #555;
+    color: #fff;
+}
+
+QHeaderView::section {
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                      stop:0 #333, stop:1 #555);
+    padding: 6px;
+    border: 1px solid #444;
+    font-size: 11pt;
+    color: #ddd;
+    font-weight: bold;
+}
+
+QScrollBar:vertical {
+    border: 1px solid #2c2c2c;
+    background: #2c2c2c;
+    width: 12px;
+    margin: 0px 0px 0px 0px;
+}
+
+QScrollBar::handle:vertical {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                                stop:0 #444, stop:1 #555);
+    min-height: 20px;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    background-color: #333;
+    height: 0px;
+}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+QTableWidget::viewport {
+    background-color: #222;
+}
+</string>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QCheckBox" name="checkBox_F1">
     <property name="geometry">
@@ -385,7 +449,7 @@
      <rect>
       <x>140</x>
       <y>25</y>
-      <width>75</width>
+      <width>84</width>
       <height>23</height>
      </rect>
     </property>
@@ -398,7 +462,7 @@
      <rect>
       <x>140</x>
       <y>50</y>
-      <width>75</width>
+      <width>84</width>
       <height>23</height>
      </rect>
     </property>
@@ -489,7 +553,7 @@
      <rect>
       <x>80</x>
       <y>520</y>
-      <width>75</width>
+      <width>84</width>
       <height>23</height>
      </rect>
     </property>
@@ -720,6 +784,9 @@
       <width>411</width>
       <height>0</height>
      </size>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
     </property>
     <column>
      <property name="text">
