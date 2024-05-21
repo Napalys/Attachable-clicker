@@ -19,70 +19,6 @@
   <property name="autoFillBackground">
    <bool>false</bool>
   </property>
-  <property name="styleSheet">
-   <string notr="true">/* Style for the main window or central widget */
-QWidget {
-    background-color: #222; /* Very dark grey background for the entire window */
-    color: #ddd; /* Light grey text for readability */
-}
-
-/* Existing table widget styles */
-QTableWidget {
-    border: 1px solid #333;
-    background-color: #222;
-    color: #ddd;
-    gridline-color: #444;
-}
-
-QTableWidget::item {
-    padding: 8px;
-    background-color: #222;
-    color: #ddd;
-    border-color: #444;
-}
-
-QTableWidget::item:selected {
-    background-color: #555;
-    color: #fff;
-}
-
-QHeaderView::section {
-    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                      stop:0 #333, stop:1 #555);
-    padding: 6px;
-    border: 1px solid #444;
-    font-size: 11pt;
-    color: #ddd;
-    font-weight: bold;
-}
-
-QScrollBar:vertical {
-    border: 1px solid #2c2c2c;
-    background: #2c2c2c;
-    width: 12px;
-    margin: 0px 0px 0px 0px;
-}
-
-QScrollBar::handle:vertical {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                                stop:0 #444, stop:1 #555);
-    min-height: 20px;
-}
-
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    background-color: #333;
-    height: 0px;
-}
-
-QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
-    background: none;
-}
-
-QTableWidget::viewport {
-    background-color: #222;
-}
-</string>
-  </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QCheckBox" name="checkBox_F1">
     <property name="geometry">
@@ -449,7 +385,7 @@ QTableWidget::viewport {
      <rect>
       <x>140</x>
       <y>25</y>
-      <width>84</width>
+      <width>75</width>
       <height>23</height>
      </rect>
     </property>
@@ -462,7 +398,7 @@ QTableWidget::viewport {
      <rect>
       <x>140</x>
       <y>50</y>
-      <width>84</width>
+      <width>75</width>
       <height>23</height>
      </rect>
     </property>
@@ -523,9 +459,9 @@ QTableWidget::viewport {
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>90</y>
-      <width>241</width>
-      <height>261</height>
+      <y>80</y>
+      <width>271</width>
+      <height>271</height>
      </rect>
     </property>
     <property name="title">
@@ -535,7 +471,7 @@ QTableWidget::viewport {
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>60</x>
       <y>540</y>
       <width>251</width>
       <height>31</height>
@@ -545,7 +481,7 @@ QTableWidget::viewport {
      <enum>Qt::LeftToRight</enum>
     </property>
     <property name="text">
-     <string>Contact Author: Napalys.Klicius@gmail.com</string>
+     <string>Contact me on GitHub: &lt;a href='https://github.com/Napalys/Attachable-clicker'&gt;Attachable-clicker&lt;/a&gt;</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_Start">
@@ -553,7 +489,7 @@ QTableWidget::viewport {
      <rect>
       <x>80</x>
       <y>520</y>
-      <width>84</width>
+      <width>75</width>
       <height>23</height>
      </rect>
     </property>
@@ -566,7 +502,7 @@ QTableWidget::viewport {
      <rect>
       <x>10</x>
       <y>360</y>
-      <width>241</width>
+      <width>271</width>
       <height>151</height>
      </rect>
     </property>
@@ -762,7 +698,7 @@ QTableWidget::viewport {
      <rect>
       <x>10</x>
       <y>0</y>
-      <width>241</width>
+      <width>271</width>
       <height>81</height>
      </rect>
     </property>
@@ -774,9 +710,9 @@ QTableWidget::viewport {
     <property name="geometry">
      <rect>
       <x>570</x>
-      <y>150</y>
+      <y>20</y>
       <width>411</width>
-      <height>192</height>
+      <height>431</height>
      </rect>
     </property>
     <property name="minimumSize">
@@ -784,9 +720,6 @@ QTableWidget::viewport {
       <width>411</width>
       <height>0</height>
      </size>
-    </property>
-    <property name="styleSheet">
-     <string notr="true"/>
     </property>
     <column>
      <property name="text">
@@ -812,14 +745,40 @@ QTableWidget::viewport {
    <widget class="QPushButton" name="button_record">
     <property name="geometry">
      <rect>
-      <x>680</x>
-      <y>370</y>
-      <width>171</width>
+      <x>580</x>
+      <y>460</y>
+      <width>151</width>
       <height>34</height>
      </rect>
     </property>
     <property name="text">
      <string>Record Key strokes</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_delete_key">
+    <property name="geometry">
+     <rect>
+      <x>860</x>
+      <y>460</y>
+      <width>111</width>
+      <height>34</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Delete selected</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_insert_key">
+    <property name="geometry">
+     <rect>
+      <x>740</x>
+      <y>460</y>
+      <width>111</width>
+      <height>34</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Insert a key</string>
     </property>
    </widget>
    <zorder>groupBox</zorder>
@@ -859,6 +818,8 @@ QTableWidget::viewport {
    <zorder>lineEdit_PID_2</zorder>
    <zorder>tableWidget</zorder>
    <zorder>button_record</zorder>
+   <zorder>pushButton_delete_key</zorder>
+   <zorder>pushButton_insert_key</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -869,8 +830,32 @@ QTableWidget::viewport {
      <height>30</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuwq">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionSave"/>
+    <addaction name="actionLoad"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <addaction name="menuwq"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionLoad">
+   <property name="text">
+    <string>Load</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

@@ -67,6 +67,8 @@ void setupTable(QTableWidget* table) {
     table->setColumnCount(4);
     QStringList headers = {"Name", "Key", "Delay ms", "Action"};
     table->setHorizontalHeaderLabels(headers);
+    table->setSelectionMode(QAbstractItemView::SingleSelection);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
 
     auto* nonEditableDelegate = new NonEditableDelegate(table);
     table->setItemDelegateForColumn(0, nonEditableDelegate);
@@ -87,6 +89,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     setupTable(ui->tableWidget);
+     ui->label->setOpenExternalLinks(true);
 }
 
 MainWindow::~MainWindow() {
@@ -178,8 +181,13 @@ std::vector<ClickerData> MainWindow::extractAllDataFromTable() {
 }
 
 void MainWindow::addRowToTable(const ClickerData& data) {
-    int row = ui->tableWidget->rowCount();
+    int row = ui->tableWidget->currentRow() + 1;
+    if (row == 0) {
+        row = ui->tableWidget->rowCount();
+    }
+
     ui->tableWidget->insertRow(row);
+
     auto *name = new QTableWidgetItem(QString(data.key_name.data()));
     ui->tableWidget->setItem(row, 0, name);
 
@@ -192,6 +200,7 @@ void MainWindow::addRowToTable(const ClickerData& data) {
     auto *action = new QTableWidgetItem(data.event == ClickerData::Event::Pressed ? "Pressed" : "Released");
     ui->tableWidget->setItem(row, 3, action);
 }
+
 
 void MainWindow::on_select_PID_clicked() {
     extractAllDataFromTable();
@@ -253,4 +262,18 @@ void MainWindow::on_pushButton_PID_clicked() {
     ui->pushButton_PID->setAutoFillBackground(true);
     ui->pushButton_PID->setStyleSheet("background-color: rgb(50, 165, 89); color: rgb(255, 255, 255)");
     ui->pushButton_PID->setText("Success!");
+}
+
+void MainWindow::on_pushButton_delete_key_clicked() {
+    int selectedRow = ui->tableWidget->selectionModel()->currentIndex().row();
+    if (selectedRow >= 0) {
+        ui->tableWidget->removeRow(selectedRow);
+    }else{
+        createErrorBox(std::string("First select row to be removed"));
+
+    }
+}
+
+void MainWindow::on_pushButton_insert_key_clicked() {
+    addRowToTable(ClickerData{});
 }

@@ -22,15 +22,14 @@ private slots:
     void on_pushButton_Start_clicked();
 
     void on_pushButton_PID_clicked();
+    void on_pushButton_delete_key_clicked();
+    void on_pushButton_insert_key_clicked();
     void on_select_PID_clicked();
     void on_button_record_clicked();
-    void addRowToTable(const ClickerData& data);  // Function to add rows
+    void addRowToTable(const ClickerData& data);
     std::vector<ClickerData> extractAllDataFromTable();
 
-
     std::vector<ClickerData> retrieveClickToInvoke();
-
-//    HWND receiveHWND(const DWORD &dwProcessID, const std::string &processName);
 
 private:
     Ui::MainWindow *ui;
