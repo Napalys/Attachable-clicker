@@ -262,6 +262,7 @@ void MainWindow::loadRoutineData() {
 
     ui->tableWidget->clear();
     ui->tableWidget->setRowCount(0);
+    setupTable(ui->tableWidget);
 
     for(const auto& data : dataVec) {
         addRowToTable(data);

@@ -27,7 +27,7 @@ if(UNIX AND NOT APPLE)
 endif ()
 
 add_library(clicker_lib STATIC ${SOURCE_FILES} ${HEADER_FILES})
-target_include_directories(clicker_lib PUBLIC include )
+target_include_directories(clicker_lib PUBLIC include ${json_SOURCE_DIR}/include)
 
 set_target_properties(clicker_lib PROPERTIES LINKER_LANGUAGE CXX)
 
