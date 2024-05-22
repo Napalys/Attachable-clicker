@@ -12,6 +12,7 @@
 #include "delegates/non_editable_delegate.hpp"
 #include "delegates/numeric_delegate.hpp"
 #include "delegates/action_delegate.hpp"
+#include "dialogs/clicker_data_dialog.h"
 
 void setupTable(QTableWidget* table) {
     table->setColumnCount(4);
@@ -111,6 +112,7 @@ void MainWindow::addRowToTable(const ClickerData& data) {
     if (row == 0) {
         row = ui->tableWidget->rowCount();
     }
+    std::cout << "Add key" <<( data.event == ClickerData::Event::Pressed ? "Pressed" : "Released" )<< std::endl;
 
     ui->tableWidget->insertRow(row);
 
@@ -125,6 +127,8 @@ void MainWindow::addRowToTable(const ClickerData& data) {
 
     auto *action = new QTableWidgetItem(data.event == ClickerData::Event::Pressed ? "Pressed" : "Released");
     ui->tableWidget->setItem(row, 3, action);
+    ui->tableWidget->setCurrentCell(row, 0);
+    ui->tableWidget->scrollToItem(name);
 }
 
 
@@ -197,7 +201,7 @@ void MainWindow::on_pushButton_delete_key_clicked() {
 }
 
 void MainWindow::on_pushButton_insert_key_clicked() {
-    ClickerDataDialog dialog(this);
+    GUI::Dialogs::ClickerDataDialog dialog(this);
     if (dialog.exec() == QDialog::Accepted) {
         ClickerData data = dialog.getClickerData();
         addRowToTable(data);

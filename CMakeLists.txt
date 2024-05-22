@@ -18,6 +18,8 @@ add_executable(${PROJECT_NAME} main.cpp
         gui/delegates/non_editable_delegate.hpp
         gui/delegates/numeric_delegate.hpp
         gui/delegates/action_delegate.hpp
+        gui/dialogs/clicker_data_dialog.cpp
+        gui/dialogs/clicker_data_dialog.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE gui)

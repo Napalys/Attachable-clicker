@@ -17,62 +17,6 @@ QT_END_NAMESPACE
 #include <QFileDialog>
 
 
-class ClickerDataDialog : public QDialog {
-Q_OBJECT
-
-public:
-    ClickerDataDialog(QWidget *parent = nullptr) : QDialog(parent) {
-        setupUi();
-        connectSignals();
-    }
-
-    [[nodiscard]] ClickerData getClickerData() const {
-        return {static_cast<uint8_t>(keyCodeEdit->text().toInt()),
-                static_cast<uint32_t>(delayEdit->value()),
-                static_cast<ClickerData::Event>(eventComboBox->currentIndex()),
-                keyNameEdit->text().toStdString()};
-    }
-
-private:
-    QLineEdit *keyNameEdit{};
-    QSpinBox *keyCodeEdit{};
-    QSpinBox *delayEdit{};
-    QComboBox *eventComboBox{};
-    QDialogButtonBox *buttonBox{};
-
-    void setupUi() {
-        keyCodeEdit = new QSpinBox(this);
-        keyCodeEdit->setRange(0, 255);
-
-        delayEdit = new QSpinBox(this);
-        delayEdit->setRange(0, 100000);
-
-        keyNameEdit = new QLineEdit(this);
-
-        eventComboBox = new QComboBox(this);
-        eventComboBox->addItem("Pressed", QVariant(static_cast<int>(ClickerData::Event::Pressed)));
-        eventComboBox->addItem("Released", QVariant(static_cast<int>(ClickerData::Event::Released)));
-        eventComboBox->addItem("Unknown", QVariant(static_cast<int>(ClickerData::Event::Unknown)));
-
-        buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
-
-        auto *layout = new QFormLayout(this);
-        layout->addRow("Key Code:", keyCodeEdit);
-        layout->addRow("Delay (ms):", delayEdit);
-        layout->addRow("Event:", eventComboBox);
-        layout->addRow("Key Name:", keyNameEdit);
-        layout->addWidget(buttonBox);
-
-        setLayout(layout);
-        setWindowTitle("Add Clicker Data");
-    }
-
-    void connectSignals() {
-        connect(buttonBox, &QDialogButtonBox::accepted, this, &QDialog::accept);
-        connect(buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
-    }
-};
-
 class MainWindow : public QMainWindow {
 Q_OBJECT
 
