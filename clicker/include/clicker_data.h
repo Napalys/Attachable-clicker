@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <nlohmann/json.hpp>
 
 struct ClickerData {
     enum class Event { Pressed, Released, Unknown };
@@ -33,6 +34,8 @@ struct ClickerData {
         os << std::endl;
         return os;
     }
+
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(ClickerData, key_code, delay, event, key_name)
 };
 
 #endif // CLICKERDATA_H

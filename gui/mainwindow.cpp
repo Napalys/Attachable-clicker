@@ -5,63 +5,13 @@
 #include "process_handler/keyboard_callback.h"
 #include <thread>
 #include <regex>
-#include <QItemDelegate>
 #include <QStyledItemDelegate>
-#include <QComboBox>
+#include <QFileDialog>
+#include <QTextStream>
 
-class NumericDelegate : public QItemDelegate {
-public:
-    explicit NumericDelegate(QObject *parent = nullptr) : QItemDelegate(parent) {}
-
-    QWidget* createEditor(QWidget *parent, const QStyleOptionViewItem&,
-                          const QModelIndex&) const override {
-        auto* editor = new QLineEdit(parent);
-        editor->setValidator(new QIntValidator(0, 100000, editor));
-        return editor;
-    }
-};
-
-class NonEditableDelegate : public QItemDelegate {
-public:
-    explicit NonEditableDelegate(QObject *parent = nullptr) : QItemDelegate(parent) {}
-
-    QWidget* createEditor(QWidget *, const QStyleOptionViewItem &, const QModelIndex &) const override {
-        return nullptr;
-    }
-};
-
-class ActionDelegate : public QStyledItemDelegate {
-public:
-    explicit ActionDelegate(QObject *parent = nullptr) : QStyledItemDelegate(parent) {}
-
-    QWidget* createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                          const QModelIndex &index) const override {
-        Q_UNUSED(option);
-        Q_UNUSED(index);
-        auto *editor = new QComboBox(parent);
-        editor->addItem("Pressed");
-        editor->addItem("Released");
-        return editor;
-    }
-
-    void setEditorData(QWidget *editor, const QModelIndex &index) const override {
-        QString value = index.model()->data(index, Qt::EditRole).toString();
-        auto *comboBox = dynamic_cast<QComboBox*>(editor);
-        comboBox->setCurrentIndex(comboBox->findText(value));
-    }
-
-    void setModelData(QWidget *editor, QAbstractItemModel *model,
-                      const QModelIndex &index) const override {
-        auto *comboBox = dynamic_cast<QComboBox*>(editor);
-        model->setData(index, comboBox->currentText(), Qt::EditRole);
-    }
-
-    void updateEditorGeometry(QWidget *editor,
-                              const QStyleOptionViewItem &option, const QModelIndex &index) const override {
-        Q_UNUSED(index);
-        editor->setGeometry(option.rect);
-    }
-};
+#include "delegates/non_editable_delegate.hpp"
+#include "delegates/numeric_delegate.hpp"
+#include "delegates/action_delegate.hpp"
 
 void setupTable(QTableWidget* table) {
     table->setColumnCount(4);
@@ -70,14 +20,14 @@ void setupTable(QTableWidget* table) {
     table->setSelectionMode(QAbstractItemView::SingleSelection);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
 
-    auto* nonEditableDelegate = new NonEditableDelegate(table);
+    auto* nonEditableDelegate = new GUI::Delegates::NonEditableDelegate(table);
     table->setItemDelegateForColumn(0, nonEditableDelegate);
     table->setItemDelegateForColumn(1, nonEditableDelegate);
 
-    auto* numericDelegate = new NumericDelegate(table);
+    auto* numericDelegate = new GUI::Delegates::NumericDelegate(table);
     table->setItemDelegateForColumn(2, numericDelegate);
 
-    auto* actionDelegate = new ActionDelegate(table);
+    auto* actionDelegate = new GUI::Delegates::ActionDelegate(table);
     table->setItemDelegateForColumn(3, actionDelegate);
     table->verticalHeader()->hide();
 }
@@ -89,7 +39,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     setupTable(ui->tableWidget);
-     ui->label->setOpenExternalLinks(true);
+    ui->label->setOpenExternalLinks(true);
+    connect(ui->actionSave, &QAction::triggered, this, &MainWindow::saveRoutineData);
+    connect(ui->actionLoad, &QAction::triggered, this, &MainWindow::loadRoutineData);
 }
 
 MainWindow::~MainWindow() {
@@ -100,50 +52,24 @@ void createErrorBox(const std::string &errorMsg) {
     QMessageBox::warning(nullptr, "Error", errorMsg.c_str());
 }
 
-std::vector<ClickerData> MainWindow::retrieveClickToInvoke() {
-    /// Retrieve check boxes from the GUI
-    QList<QCheckBox *> l_checkboxes = this->findChildren<QCheckBox *>();
-    /// Retrieve text boxes from GUI
-    QList<QLineEdit *> txtBoxes = this->findChildren<QLineEdit *>();
-    std::vector<ClickerData> keyEvents{};
-    /// Configure out clicker
-    uint8_t currentKeyCode = 0x70;
-    for (auto &cBox: l_checkboxes) {
-        if (cBox->isChecked()) {
-            for (auto &tBox: txtBoxes) {
-                /// If check box with text edit line align we && check box is enabled
-                /// we create new data clicker obj
-                if (cBox->y() == tBox->y()) {
-                    std::string keyNumber = std::regex_replace(tBox->accessibleName().toStdString(),
-                                                               std::regex(R"([\D])"), "");
-                    keyEvents.emplace_back(currentKeyCode, tBox->text().toUInt(), ClickerData::Event::Pressed, "");
-                    keyEvents.emplace_back(currentKeyCode, 100, ClickerData::Event::Released, " ");
-                    break;
-                }
-            }
-        }
-        currentKeyCode++;
-    }
-#ifdef DEBUG
-    std::cout << "Number of keys to inject:  " << keyEvents.size() << std::endl;
-#endif
-    return keyEvents;
-}
-
 void MainWindow::on_pushButton_Start_clicked() {
     if (!clicker) {
         createErrorBox("Please set up PID first");
         return;
     }
 
+    if (isRecording) {
+        createErrorBox("Please stop recording before starting clicker");
+        return;
+    }
+
+    if(ui->tableWidget->rowCount() == 0){
+        createErrorBox("Please add some keys to be clicked");
+        return;
+    }
+
     if (!clicker->getClickerStatus()) {
         std::vector<ClickerData> keyEvents = extractAllDataFromTable();
-#ifdef DEBUG
-        for (auto &ev: keyEvents) {
-            std::cout << ev.key_code << "Short" << std::endl;
-        }
-        std::cout << "----------" << std::endl;
-#endif
         clicker->setClickerStatus(true);
         ui->pushButton_Start->setText("Stop");
         clicker->initClickerThreads(keyEvents);
@@ -202,17 +128,17 @@ void MainWindow::addRowToTable(const ClickerData& data) {
 }
 
 
-void MainWindow::on_select_PID_clicked() {
+void MainWindow::on_pushButton_select_window_clicked() {
     extractAllDataFromTable();
     std::cout << "on_select_PID_clicked select" << std::endl;
 }
 
-void MainWindow::on_button_record_clicked() {
+void MainWindow::on_pushButton_record_clicked() {
     if (isRecording) {
         ProcessHandler::removeCallBack();
-        ui->button_record->setStyleSheet("");
-        ui->button_record->setText("Record Key strokes");
-        std::cout << "on_button_record_clicked unselect" << std::endl;
+        ui->pushButton_record->setStyleSheet("");
+        ui->pushButton_record->setText("Record Key strokes");
+        std::cout << "on_pushButton_record_clicked unselect" << std::endl;
     } else {
         try {
             ProcessHandler::registerCallBack([&](const ClickerData& data){
@@ -223,9 +149,9 @@ void MainWindow::on_button_record_clicked() {
             createErrorBox(e.what());
             return;
         }
-        ui->button_record->setStyleSheet("background-color: rgb(220, 20, 60); color: rgb(255, 255, 255)");
-        ui->button_record->setText("Stop recording");
-        std::cout << "on_button_record_clicked select" << std::endl;
+        ui->pushButton_record->setStyleSheet("background-color: rgb(220, 20, 60); color: rgb(255, 255, 255)");
+        ui->pushButton_record->setText("Stop recording");
+        std::cout << "on_pushButton_record_clicked select" << std::endl;
     }
     isRecording = !isRecording;
 }
@@ -233,31 +159,28 @@ void MainWindow::on_button_record_clicked() {
 
 
 void MainWindow::on_pushButton_PID_clicked() {
-    ///Retrieve PID from the text box
-    uint32_t dwProcessID = ui->lineEdit_PID->text().toInt();
+    uint32_t process_id = ui->lineEdit_PID->text().toInt();
+    std::string process_name = ui->lineEdit_tittle->text().toStdString();
 
-    ///Retrieve name of PID
-    std::string processName = ui->lineEdit_PID_2->text().toStdString();
-
-    ///If PID or name of the process not provided, throw error msg
-    if (dwProcessID == 0 || processName.empty()) {
+    if (process_id == 0 || process_name.empty()) {
         createErrorBox("Incorrect PID, it can contain only numbers! Tittle cannot be empty");
         return;
     }
     try {
-        clicker = std::make_unique<Clicker>(dwProcessID, processName);
+        clicker = std::make_unique<Clicker>(process_id, process_name);
     }
     catch (const std::exception &e) {
         createErrorBox(std::string("PID with such name not found. Did you mean? ") + e.what());
         return;
     }
+
     ui->lineEdit_PID->setReadOnly(true);
-    ui->lineEdit_PID_2->setReadOnly(true);
+    ui->lineEdit_tittle->setReadOnly(true);
     auto *palette = new QPalette();
     palette->setColor(QPalette::Base, Qt::gray);
     palette->setColor(QPalette::Text, Qt::black);
     ui->lineEdit_PID->setPalette(*palette);
-    ui->lineEdit_PID_2->setPalette(*palette);
+    ui->lineEdit_tittle->setPalette(*palette);
     ui->pushButton_PID->setEnabled(false);
     ui->pushButton_PID->setAutoFillBackground(true);
     ui->pushButton_PID->setStyleSheet("background-color: rgb(50, 165, 89); color: rgb(255, 255, 255)");
@@ -270,10 +193,77 @@ void MainWindow::on_pushButton_delete_key_clicked() {
         ui->tableWidget->removeRow(selectedRow);
     }else{
         createErrorBox(std::string("First select row to be removed"));
-
     }
 }
 
 void MainWindow::on_pushButton_insert_key_clicked() {
-    addRowToTable(ClickerData{});
+    ClickerDataDialog dialog(this);
+    if (dialog.exec() == QDialog::Accepted) {
+        ClickerData data = dialog.getClickerData();
+        addRowToTable(data);
+    }
+}
+
+void MainWindow::saveRoutineData() {
+    nlohmann::json jsonData = extractAllDataFromTable();
+    const auto initialDir = QDir::currentPath() + "/Routines";
+    QDir().mkpath(initialDir);
+    QString defaultFileName = initialDir + "/Untitled.json";
+    QString fileName = QFileDialog::getSaveFileName(
+            this,
+            "Save File",
+            defaultFileName,
+            "JSON Files (*.json);;All Files (*)"
+    );
+
+    if (fileName.isEmpty()) return;
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, "Error", "Could not open file for writing.");
+        return;
+    }
+
+    QTextStream out(&file);
+    out << QString(jsonData.dump(4).data());
+    file.close();
+}
+
+void MainWindow::loadRoutineData() {
+    const QString initialDir = QDir::currentPath() + "/Routines";
+    QDir().mkpath(initialDir);
+    QString defaultFileName = initialDir + "/Untitled.json";
+    QString fileName = QFileDialog::getOpenFileName(
+            this,
+            "Open File",
+            defaultFileName,
+            "JSON Files (*.json);;All Files (*)"
+    );
+    if (fileName.isEmpty()) return;
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, "Error", "Could not open file for reading.");
+        return;
+    }
+
+    QTextStream in(&file);
+    std::string rawData = in.readAll().toStdString();
+    file.close();
+
+    nlohmann::json jsonData;
+    try{
+        jsonData = nlohmann::json::parse(rawData, nullptr, true, true);
+    }catch (const nlohmann::json::parse_error &e){
+        createErrorBox(std::string("Error while loading routine: ") + e.what());
+        return;
+    }
+    const auto dataVec = jsonData.get<std::vector<ClickerData>>();
+
+    ui->tableWidget->clear();
+    ui->tableWidget->setRowCount(0);
+
+    for(const auto& data : dataVec) {
+        addRowToTable(data);
+    }
 }

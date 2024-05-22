@@ -15,6 +15,9 @@ add_subdirectory(clicker)
 add_executable(${PROJECT_NAME} main.cpp
         gui/mainwindow.cpp
         gui/mainwindow.ui
+        gui/delegates/non_editable_delegate.hpp
+        gui/delegates/numeric_delegate.hpp
+        gui/delegates/action_delegate.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE gui)
