@@ -10,8 +10,11 @@
 
 namespace ProcessHandler {
     using KeyboardCallback = std::function<void(ClickerData)>;
+    using PIDExtraction = std::function<void(int, const std::string&)>;
 
-    void registerCallBack(const KeyboardCallback& cb);
+    void registerCallBack(const KeyboardCallback &cb);
+
+    void callBackOnPIDExtracted(const PIDExtraction &on_pid_extracted);
 
     void removeCallBack();
 }

@@ -134,6 +134,28 @@ void MainWindow::addRowToTable(const ClickerData& data) {
 
 void MainWindow::on_pushButton_select_window_clicked() {
     extractAllDataFromTable();
+    ProcessHandler::callBackOnPIDExtracted([&](int pid, const std::string& title){
+        try {
+            clicker = std::make_unique<Clicker>(pid, title);
+        }
+        catch (const std::exception &e) {
+            createErrorBox(std::string("PID with such name not found. Did you mean? ") + e.what());
+            return;
+        }
+        ui->lineEdit_PID->setText(QString::number(pid));
+        ui->lineEdit_tittle->setText(QString(title.data()));
+        ui->lineEdit_PID->setReadOnly(true);
+        ui->lineEdit_tittle->setReadOnly(true);
+        auto *palette = new QPalette();
+        palette->setColor(QPalette::Base, Qt::gray);
+        palette->setColor(QPalette::Text, Qt::black);
+        ui->lineEdit_PID->setPalette(*palette);
+        ui->lineEdit_tittle->setPalette(*palette);
+        ui->pushButton_PID->setEnabled(false);
+        ui->pushButton_PID->setAutoFillBackground(true);
+        ui->pushButton_PID->setStyleSheet("background-color: rgb(50, 165, 89); color: rgb(255, 255, 255)");
+        ui->pushButton_PID->setText("Success!");
+    });
     std::cout << "on_select_PID_clicked select" << std::endl;
 }
 

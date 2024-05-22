@@ -24,7 +24,12 @@
 namespace ProcessHandler {
 
     static KeyboardCallback callback = nullptr;
+    static PIDExtraction on_pid_extracted = nullptr;
     static bool keyboard_registered = false;
+#ifdef WIN32
+    static std::unordered_map<DWORD, bool> keyState;
+#endif
+
 
 #ifdef linux
 
@@ -134,21 +139,33 @@ namespace ProcessHandler {
     }
 
     LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
-        if (nCode == HC_ACTION) {
-            KBDLLHOOKSTRUCT *pKeyBoard = (KBDLLHOOKSTRUCT *)lParam;
-            if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN || wParam == WM_KEYUP || wParam == WM_SYSKEYUP) {
-                DWORD vkCode = pKeyBoard->vkCode;
-                auto currentKeyPressTime = std::chrono::steady_clock::now();
-
-                auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(currentKeyPressTime - lastKeyPressTime).count();
-                const auto keyEvent = (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) ? ClickerData::Event::Pressed : ClickerData::Event::Released;
-
-                ClickerData clickerData(vkCode, static_cast<uint32_t>(delay), keyEvent, GetKeyName(vkCode));
-                callback(clickerData);
-                lastKeyPressTime = currentKeyPressTime;
-            }
+      if (nCode == HC_ACTION) {
+        auto *pKeyBoard = (KBDLLHOOKSTRUCT *) lParam;
+        if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) {
+          if (!keyState[pKeyBoard->vkCode]) {
+            keyState[pKeyBoard->vkCode] = true;
+            auto currentKeyPressTime = std::chrono::steady_clock::now();
+            auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    currentKeyPressTime - lastKeyPressTime).count();
+            ClickerData clickerData(pKeyBoard->vkCode, static_cast<uint32_t>(delay), ClickerData::Event::Pressed,
+                                    GetKeyName(pKeyBoard->vkCode));
+            callback(clickerData);
+            lastKeyPressTime = currentKeyPressTime;
+          }
+        } else if (wParam == WM_KEYUP || wParam == WM_SYSKEYUP) {
+          if (keyState[pKeyBoard->vkCode]) {
+            keyState[pKeyBoard->vkCode] = false;
+            auto currentKeyPressTime = std::chrono::steady_clock::now();
+            auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    currentKeyPressTime - lastKeyPressTime).count();
+            ClickerData clickerData(pKeyBoard->vkCode, static_cast<uint32_t>(delay), ClickerData::Event::Released,
+                                    GetKeyName(pKeyBoard->vkCode));
+            callback(clickerData);
+            lastKeyPressTime = currentKeyPressTime;
+          }
         }
-        return CallNextHookEx(hKeyboardHook, nCode, wParam, lParam);
+      }
+      return CallNextHookEx(hKeyboardHook, nCode, wParam, lParam);
     }
 
     void SetHook() {
@@ -192,6 +209,39 @@ namespace ProcessHandler {
         keyboard_registered = false;
 #ifdef WIN32
         ReleaseHook();
+        keyState.clear();
 #endif
     }
+#ifdef WIN32
+    HHOOK mouseHook;
+    LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
+        if (nCode >= 0 && wParam == WM_LBUTTONDOWN) {
+            POINT cursorPos;
+            GetCursorPos(&cursorPos); // Get current cursor position
+            HWND pointedWindow = WindowFromPoint(cursorPos); // Get window handle under cursor
+            if (pointedWindow != nullptr) {
+                DWORD processId;
+                char windowTitle[256];
+                GetWindowThreadProcessId(pointedWindow, &processId); // Get PID of the pointed window
+                GetWindowText(pointedWindow, windowTitle, sizeof(windowTitle)); // Get window title
+                std::cout << "Process ID: " << processId << std::endl;
+                std::cout << "Window Title: " << windowTitle << std::endl;
+                if (on_pid_extracted) {
+                    on_pid_extracted(processId, std::string(windowTitle));
+                }
+                UnhookWindowsHookEx(mouseHook);
+                return 1; // Stop processing further hooks
+            }
+        }
+        return CallNextHookEx(mouseHook, nCode, wParam, lParam);
+    }
+#endif
+    void callBackOnPIDExtracted(const PIDExtraction &on_extraction){
+        on_pid_extracted = on_extraction;
+#ifdef WIN32
+        mouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseProc, nullptr, 0);
+#endif
+    }
+
+
 }
