@@ -142,7 +142,7 @@ void MainWindow::addRowToTable(const std::variant<ClickerData, Delay>& data) {
 
             // Gray out the unused fourth column
             placeholder->setFlags(placeholder->flags() ^ Qt::ItemIsEditable);
-            placeholder->setBackground(QBrush(Qt::lightGray));
+            placeholder->setBackground(QBrush(Qt::darkGray));
         } else if constexpr (std::is_same_v<T, Delay>) {
             // Handling Delay
             auto *name = new QTableWidgetItem("Delay");
@@ -156,9 +156,9 @@ void MainWindow::addRowToTable(const std::variant<ClickerData, Delay>& data) {
             ui->tableWidget->setItem(row, 3, placeholder2);
 
             placeholder1->setFlags(placeholder1->flags() ^ Qt::ItemIsEditable);
-            placeholder1->setBackground(QBrush(Qt::lightGray));
+            placeholder1->setBackground(QBrush(Qt::darkGray));
             placeholder2->setFlags(placeholder2->flags() ^ Qt::ItemIsEditable);
-            placeholder2->setBackground(QBrush(Qt::lightGray));
+            placeholder2->setBackground(QBrush(Qt::darkGray));
         }
     }, data);
 
