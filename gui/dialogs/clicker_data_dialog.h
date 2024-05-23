@@ -22,7 +22,6 @@ namespace GUI::Dialogs {
 
         [[nodiscard]] inline ClickerData getClickerData() const {
             return {static_cast<uint8_t>(keyCodeEdit->text().toInt()),
-                    static_cast<uint32_t>(delayEdit->value()),
                     static_cast<ClickerData::Event>(eventComboBox->currentIndex()),
                     keyNameEdit->text().toStdString()};
         }

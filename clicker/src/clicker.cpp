@@ -23,7 +23,8 @@ void startClicking(const ClickerData &data, Clicker *clicker) {
         m.lock();
         clicker->process_manager->sendClick(data);
         m.unlock();
-        std::this_thread::sleep_for(std::chrono::milliseconds(data.delay));
+//        std::this_thread::sleep_for(std::chrono::milliseconds(data.delay));
+
     }
 }
 

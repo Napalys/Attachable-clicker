@@ -61,7 +61,6 @@ namespace ProcessHandler {
                 libevdev_has_event_code(dev, EV_KEY, KEY_ENTER) &&
                 libevdev_has_event_code(dev, EV_KEY, KEY_SPACE) &&
                 libevdev_has_event_code(dev, EV_KEY, KEY_F1) &&
-                std::string(libevdev_get_name(dev)).find("Keyboard") != std::string::npos &&
                 std::string(libevdev_get_name(dev)).find("Mouse") == std::string::npos) {
                 libevdev_free(dev);
                 closedir(dir);
@@ -111,8 +110,9 @@ namespace ProcessHandler {
                                 formatted_key_name = formatted_key_name.substr(prefix_length);
                             }
                         }
-                        ClickerData clickerData(ev.code, static_cast<uint32_t>(delay), event, formatted_key_name);
+                        ClickerData clickerData(ev.code, event, formatted_key_name);
                         callback(clickerData);
+                        callback(Delay(static_cast<uint32_t>(delay)));
                     }
                 }
             }

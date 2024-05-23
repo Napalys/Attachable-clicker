@@ -26,7 +26,7 @@ void Routine::startRoutine() {
             for (const auto &data: clicks) {
                 process_manager->sendClick(data);
                 if(!running) break;
-                std::this_thread::sleep_for(std::chrono::milliseconds(data.delay));
+//                std::this_thread::sleep_for(std::chrono::milliseconds(data.delay));
             }
         }
 

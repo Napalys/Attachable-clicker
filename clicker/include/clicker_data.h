@@ -5,21 +5,31 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
+struct Delay{
+    uint32_t delay;
+    Delay() : delay(0) {}
+    explicit Delay(uint32_t delay) : delay{delay} {}
+    friend std::ostream& operator<<(std::ostream& os, const Delay& d) {
+        os << "Delay: " << d.delay << std::endl;
+        return os;
+    }
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Delay, delay)
+};
+
 struct ClickerData {
     enum class Event { Pressed, Released, Unknown };
     uint8_t key_code;
-    uint32_t delay;
     Event event;
     std::string key_name;
 
-    ClickerData() : key_code(0), delay(0), event(Event::Unknown) {}
+    ClickerData() : key_code(0), event(Event::Unknown) {}
 
-    ClickerData(uint8_t key_code, uint32_t delay, Event e, std::string key_name)
-            : key_code{key_code}, delay{delay}, event{e}, key_name{std::move(key_name)} {};
+    ClickerData(uint8_t key_code, Event e, std::string key_name)
+            : key_code{key_code}, event{e}, key_name{std::move(key_name)} {};
 
     friend std::ostream& operator<<(std::ostream& os, const ClickerData& data) {
         os << "Key Name: " << data.key_name << " Key Code: " << static_cast<int>(data.key_code)
-           << " Delay: " << data.delay << " Event: ";
+           << " Event: ";
         switch (data.event) {
             case Event::Pressed:
                 os << "Pressed";
@@ -35,7 +45,18 @@ struct ClickerData {
         return os;
     }
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(ClickerData, key_code, delay, event, key_name)
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(ClickerData, key_code, event, key_name)
+};
+
+struct KeyNameVisitor {
+    auto inline operator()(const ClickerData& data) const {
+        return data.key_name;
+    }
+
+    auto inline operator()(const Delay& data) const {
+        (void)data;
+        return std::string("Delay");
+    }
 };
 
 #endif // CLICKERDATA_H
