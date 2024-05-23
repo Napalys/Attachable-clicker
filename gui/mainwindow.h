@@ -38,6 +38,11 @@ private slots:
 
     void saveRoutineData();
     void loadRoutineData();
+    void setPIDFoundSuccessful();
+    void enableKeyStrokeRecording();
+    void disableKeyStrokeRecording();
+    void enableClicker();
+    void disableClicker();
     void addRowToTable(const std::variant<ClickerData, Delay>& data);
     std::vector<std::variant<ClickerData, Delay>> extractAllDataFromTable();
 

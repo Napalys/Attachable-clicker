@@ -8,6 +8,7 @@
 #include <QStyledItemDelegate>
 #include <QFileDialog>
 #include <QTextStream>
+#include <QBrush>
 
 #include "delegates/non_editable_delegate.hpp"
 #include "delegates/numeric_delegate.hpp"
@@ -71,19 +72,24 @@ void MainWindow::on_pushButton_Start_clicked() {
         return;
     }
 
-    if (!clicker->getClickerStatus()) {
-        auto keyEvents = extractAllDataFromTable();
-        clicker->setClickerStatus(true);
-        ui->pushButton_Start->setText("Stop");
-        clicker->addRoutine(keyEvents);
-        clicker->startRoutines();
-    } else {
-        clicker->setClickerStatus(false);
-        ui->pushButton_Start->setText("Start");
-        QMessageBox::warning(nullptr, "Warning",
-                             "Waiting for clicker to finish task, This may take up to max declared ms");
-        clicker->stopRoutines();
-    }
+    if (!clicker->getClickerStatus()) enableClicker();
+    else disableClicker();
+}
+
+void MainWindow::enableClicker(){
+    auto keyEvents = extractAllDataFromTable();
+    clicker->setClickerStatus(true);
+    ui->pushButton_Start->setText("Stop");
+    clicker->addRoutine(keyEvents);
+    clicker->startRoutines();
+}
+
+void MainWindow::disableClicker(){
+    clicker->setClickerStatus(false);
+    ui->pushButton_Start->setText("Start");
+    QMessageBox::warning(nullptr, "Warning",
+                         "Waiting for clicker to finish task, This may take up to max declared ms");
+    clicker->stopRoutines();
 }
 
 std::vector<std::variant<ClickerData, Delay>> MainWindow::extractAllDataFromTable() {
@@ -114,7 +120,7 @@ struct PtrCreatorVisitor {
     }
 };
 
-#include <QBrush>
+
 
 void MainWindow::addRowToTable(const std::variant<ClickerData, Delay>& data) {
     int row = ui->tableWidget->currentRow() + 1;
@@ -124,7 +130,6 @@ void MainWindow::addRowToTable(const std::variant<ClickerData, Delay>& data) {
 
     ui->tableWidget->insertRow(row);
 
-    // Use std::visit to handle the insertion based on the type of data
     std::visit([&](auto&& arg) {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, ClickerData>) {
@@ -170,7 +175,6 @@ void MainWindow::addRowToTable(const std::variant<ClickerData, Delay>& data) {
 
 
 void MainWindow::on_pushButton_select_window_clicked() {
-    extractAllDataFromTable();
     ProcessHandler::callBackOnPIDExtracted([&](int pid, const std::string& title){
         try {
             clicker = std::make_unique<Clicker>(pid, title);
@@ -181,42 +185,33 @@ void MainWindow::on_pushButton_select_window_clicked() {
         }
         ui->lineEdit_PID->setText(QString::number(pid));
         ui->lineEdit_tittle->setText(QString(title.data()));
-        ui->lineEdit_PID->setReadOnly(true);
-        ui->lineEdit_tittle->setReadOnly(true);
-        auto *palette = new QPalette();
-        palette->setColor(QPalette::Base, Qt::gray);
-        palette->setColor(QPalette::Text, Qt::black);
-        ui->lineEdit_PID->setPalette(*palette);
-        ui->lineEdit_tittle->setPalette(*palette);
-        ui->pushButton_PID->setEnabled(false);
-        ui->pushButton_PID->setAutoFillBackground(true);
-        ui->pushButton_PID->setStyleSheet("background-color: rgb(50, 165, 89); color: rgb(255, 255, 255)");
-        ui->pushButton_PID->setText("Success!");
+        setPIDFoundSuccessful();
     });
-    extractAllDataFromTable();
-    std::cout << "on_select_PID_clicked select" << std::endl;
 }
 
 void MainWindow::on_pushButton_record_clicked() {
-    if (isRecording) {
-        ProcessHandler::removeCallBack();
-        ui->pushButton_record->setStyleSheet("");
-        ui->pushButton_record->setText("Record Key strokes");
-        std::cout << "on_pushButton_record_clicked unselect" << std::endl;
-    } else {
-        try {
-            ProcessHandler::registerCallBack([&](const std::variant<ClickerData, Delay>& data) {
-                addRowToTable(data);
-            });
-        }
-        catch (const std::exception &e) {
-            createErrorBox(e.what());
-            return;
-        }
-        ui->pushButton_record->setStyleSheet("background-color: rgb(220, 20, 60); color: rgb(255, 255, 255)");
-        ui->pushButton_record->setText("Stop recording");
-        std::cout << "on_pushButton_record_clicked select" << std::endl;
+    if (isRecording) disableKeyStrokeRecording();
+    else enableKeyStrokeRecording();
+}
+
+void MainWindow::enableKeyStrokeRecording() {
+    ProcessHandler::removeCallBack();
+    ui->pushButton_record->setStyleSheet("");
+    ui->pushButton_record->setText("Record Key strokes");
+}
+
+void MainWindow::disableKeyStrokeRecording() {
+    try {
+        ProcessHandler::registerCallBack([&](const std::variant<ClickerData, Delay>& data) {
+            addRowToTable(data);
+        });
     }
+    catch (const std::exception &e) {
+        createErrorBox(e.what());
+        return;
+    }
+    ui->pushButton_record->setStyleSheet("background-color: rgb(220, 20, 60); color: rgb(255, 255, 255)");
+    ui->pushButton_record->setText("Stop recording");
     isRecording = !isRecording;
 }
 
@@ -237,7 +232,11 @@ void MainWindow::on_pushButton_PID_clicked() {
         createErrorBox(std::string("PID with such name not found. Did you mean? ") + e.what());
         return;
     }
+    setPIDFoundSuccessful();
+}
 
+
+void MainWindow::setPIDFoundSuccessful() {
     ui->lineEdit_PID->setReadOnly(true);
     ui->lineEdit_tittle->setReadOnly(true);
     auto *palette = new QPalette();
@@ -251,13 +250,15 @@ void MainWindow::on_pushButton_PID_clicked() {
     ui->pushButton_PID->setText("Success!");
 }
 
+
+
 void MainWindow::on_pushButton_delete_key_clicked() {
     int selectedRow = ui->tableWidget->selectionModel()->currentIndex().row();
-    if (selectedRow >= 0) {
-        ui->tableWidget->removeRow(selectedRow);
-    }else{
+    if (selectedRow < 0) {
         createErrorBox(std::string("First select row to be removed"));
+        return;
     }
+    ui->tableWidget->removeRow(selectedRow);
 }
 
 void MainWindow::on_pushButton_insert_key_clicked() {
