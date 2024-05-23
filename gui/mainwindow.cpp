@@ -44,6 +44,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(ui->actionLoad, &QAction::triggered, this, &MainWindow::loadRoutineData);
     qRegisterMetaType<std::shared_ptr<ClickerData>>("std::shared_ptr<ClickerData>");
     qRegisterMetaType<std::shared_ptr<Delay>>("std::shared_ptr<Delay>");
+    qRegisterMetaType<QItemSelection>();
 }
 
 MainWindow::~MainWindow() {
@@ -74,13 +75,14 @@ void MainWindow::on_pushButton_Start_clicked() {
         auto keyEvents = extractAllDataFromTable();
         clicker->setClickerStatus(true);
         ui->pushButton_Start->setText("Stop");
-//        clicker->initClickerThreads(keyEvents);
+        clicker->addRoutine(keyEvents);
+        clicker->startRoutines();
     } else {
         clicker->setClickerStatus(false);
         ui->pushButton_Start->setText("Start");
         QMessageBox::warning(nullptr, "Warning",
                              "Waiting for clicker to finish task, This may take up to max declared ms");
-        clicker->destroyClickerThreads();
+        clicker->stopRoutines();
     }
 }
 
@@ -290,9 +292,16 @@ void MainWindow::saveRoutineData() {
         return;
     }
 
-    QTextStream out(&file);
-    out << QString::fromStdString(jsonData.dump(4));
-    file.close();
+    try {
+        QTextStream out(&file);
+        out << QString::fromStdString(jsonData.dump(4));
+        file.close();
+    } catch (const std::exception& e) {
+        QMessageBox::critical(this, "Error", QString("Failed to save data: %1").arg(e.what()));
+        file.close();
+        return;
+    }
+
 }
 
 void MainWindow::loadRoutineData() {
@@ -301,7 +310,9 @@ void MainWindow::loadRoutineData() {
     QString defaultFileName = initialDir + "/Untitled.json";
     QString fileName = QFileDialog::getOpenFileName(this, "Open File", defaultFileName, "JSON Files (*.json);;All Files (*)");
 
-    if (fileName.isEmpty()) return;
+    if (fileName.isEmpty()) {
+        return;
+    }
 
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -315,23 +326,38 @@ void MainWindow::loadRoutineData() {
 
     nlohmann::json jsonData;
     try {
-        jsonData = nlohmann::json::parse(rawData, nullptr, true, true);
+        jsonData = nlohmann::json::parse(rawData);
     } catch (const nlohmann::json::parse_error& e) {
-        createErrorBox("Error while loading routine: " + std::string(e.what()));
+        createErrorBox("Error while loading routine: JSON parsing error - " + std::string(e.what()));
         return;
     }
 
     ui->tableWidget->clear();
     ui->tableWidget->setRowCount(0);
     setupTable(ui->tableWidget);
-
+    bool error = false;
     for (const auto& item : jsonData) {
-        auto type = item.at("type").get<std::string>();
+        if (!item.contains("type") || !item["type"].is_string()) {
+            error = true;
+            continue;
+        }
+
+        auto type = item["type"].get<std::string>();
         if (type == "ClickerData") {
-            addRowToTable(item.get<ClickerData>());
+            if (item.contains("key_name") && item.contains("key_code") && item.contains("event")) {
+                addRowToTable(item.get<ClickerData>());
+            } else {
+                createErrorBox("Missing fields in ClickerData object.");
+            }
         } else if (type == "Delay") {
-            addRowToTable(item.get<Delay>());
+            if (item.contains("delay")) {
+                addRowToTable(item.get<Delay>());
+            } else {
+                createErrorBox("Missing 'delay' field in Delay object.");
+            }
+        } else {
+            createErrorBox("Unknown type in JSON data: " + type);
         }
     }
+    if(error)createErrorBox("Error in JSON data: Missing or invalid 'type' key.");
 }
-

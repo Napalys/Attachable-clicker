@@ -13,7 +13,6 @@ struct Delay{
         os << "Delay: " << d.delay << std::endl;
         return os;
     }
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(Delay, delay)
 };
 
 struct ClickerData {
@@ -45,8 +44,38 @@ struct ClickerData {
         return os;
     }
 
-    NLOHMANN_DEFINE_TYPE_INTRUSIVE(ClickerData, key_code, event, key_name)
+    NLOHMANN_JSON_SERIALIZE_ENUM(ClickerData::Event, {
+        {ClickerData::Event::Unknown, "Unknown"},
+        {ClickerData::Event::Pressed, "Pressed"},
+        {ClickerData::Event::Released, "Released"}
+    })
 };
+
+inline void to_json(nlohmann::json& j, const ClickerData& p) {
+    j = nlohmann::json{
+            {"type", "ClickerData"},
+            {"key_name", p.key_name},
+            {"key_code", p.key_code},
+            {"event", p.event}
+    };
+}
+
+inline void to_json(nlohmann::json& j, const Delay& d) {
+    j = nlohmann::json{
+            {"type", "Delay"},
+            {"delay", d.delay}
+    };
+}
+
+inline void from_json(const nlohmann::json& j, ClickerData& p) {
+    j.at("key_name").get_to(p.key_name);
+    j.at("key_code").get_to(p.key_code);
+    j.at("event").get_to(p.event);
+}
+
+inline void from_json(const nlohmann::json& j, Delay& d) {
+    j.at("delay").get_to(d.delay);
+}
 
 struct KeyNameVisitor {
     auto inline operator()(const ClickerData& data) const {
