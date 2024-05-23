@@ -195,12 +195,6 @@ void MainWindow::on_pushButton_record_clicked() {
 }
 
 void MainWindow::enableKeyStrokeRecording() {
-    ProcessHandler::removeCallBack();
-    ui->pushButton_record->setStyleSheet("");
-    ui->pushButton_record->setText("Record Key strokes");
-}
-
-void MainWindow::disableKeyStrokeRecording() {
     try {
         ProcessHandler::registerCallBack([&](const std::variant<ClickerData, Delay>& data) {
             addRowToTable(data);
@@ -212,6 +206,13 @@ void MainWindow::disableKeyStrokeRecording() {
     }
     ui->pushButton_record->setStyleSheet("background-color: rgb(220, 20, 60); color: rgb(255, 255, 255)");
     ui->pushButton_record->setText("Stop recording");
+    isRecording = !isRecording;
+}
+
+void MainWindow::disableKeyStrokeRecording() {
+    ProcessHandler::removeCallBack();
+    ui->pushButton_record->setStyleSheet("");
+    ui->pushButton_record->setText("Record Key strokes");
     isRecording = !isRecording;
 }
 
