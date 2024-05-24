@@ -11,6 +11,8 @@
 #include <cstring>
 #include <string>
 #include <thread>
+#include <mutex>
+
 
 #ifdef WIN32
 #include <windows.h>
@@ -18,7 +20,6 @@
 #ifdef linux
 
 #include <libevdev/libevdev.h>
-#include <mutex>
 
 #endif
 
@@ -31,6 +32,12 @@ namespace ProcessHandler {
     static std::unordered_map<DWORD, bool> keyState;
 #endif
 
+    std::mutex callbackMutex;
+
+    void safeCallback(const std::variant<ClickerData, Delay>& data) {
+        std::lock_guard<std::mutex> lock(callbackMutex);
+        callback(data);
+    }
 
 #ifdef linux
 
@@ -74,13 +81,6 @@ namespace ProcessHandler {
 
         closedir(dir);
         return -1;
-    }
-
-    std::mutex callbackMutex;
-
-    void safeCallback(const std::variant<ClickerData, Delay>& data) {
-        std::lock_guard<std::mutex> lock(callbackMutex);
-        callback(data);
     }
 
     void startListening(int fd, struct libevdev *dev) {
@@ -156,7 +156,7 @@ namespace ProcessHandler {
                     currentKeyPressTime - lastKeyPressTime).count();
             ClickerData clickerData(pKeyBoard->vkCode, ClickerData::Event::Pressed,
                                     GetKeyName(pKeyBoard->vkCode));
-            safeCallback(delay);
+            safeCallback(Delay(static_cast<uint32_t>(delay)));
             safeCallback(clickerData);
             lastKeyPressTime = currentKeyPressTime;
           }
@@ -168,7 +168,7 @@ namespace ProcessHandler {
                     currentKeyPressTime - lastKeyPressTime).count();
             ClickerData clickerData(pKeyBoard->vkCode, ClickerData::Event::Released,
                                     GetKeyName(pKeyBoard->vkCode));
-            safeCallback(delay);
+            safeCallback(Delay(static_cast<uint32_t>(delay)));
             safeCallback(clickerData);
             lastKeyPressTime = currentKeyPressTime;
           }
