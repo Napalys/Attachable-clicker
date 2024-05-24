@@ -27,4 +27,10 @@ void Clicker::startRoutines() noexcept {
 
 void Clicker::stopRoutines() noexcept {
     routines.clear();
+#ifdef WIN32
+    if (auto windows_manager = std::dynamic_pointer_cast<ProcessHandler::WindowsProcessManager>(
+                process_manager); windows_manager) {
+        windows_manager->stopAll();
+    }
+#endif
 }
