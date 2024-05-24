@@ -16,6 +16,8 @@ QT_END_NAMESPACE
 #include <QComboBox>
 #include <QFileDialog>
 
+Q_DECLARE_METATYPE(std::shared_ptr<ClickerData>)
+Q_DECLARE_METATYPE(std::shared_ptr<Delay>)
 
 class MainWindow : public QMainWindow {
 Q_OBJECT
@@ -36,8 +38,13 @@ private slots:
 
     void saveRoutineData();
     void loadRoutineData();
-    void addRowToTable(const ClickerData& data);
-    std::vector<ClickerData> extractAllDataFromTable();
+    void setPIDFoundSuccessful();
+    void enableKeyStrokeRecording();
+    void disableKeyStrokeRecording();
+    void enableClicker();
+    void disableClicker();
+    void addRowToTable(const std::variant<ClickerData, Delay>& data);
+    std::vector<std::variant<ClickerData, Delay>> extractAllDataFromTable();
 
 private:
     Ui::MainWindow *ui;

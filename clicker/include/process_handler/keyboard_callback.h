@@ -7,9 +7,10 @@
 
 #include <functional>
 #include "clicker_data.h"
+#include <variant>
 
 namespace ProcessHandler {
-    using KeyboardCallback = std::function<void(ClickerData)>;
+    using KeyboardCallback = std::function<void(std::variant<ClickerData, Delay>)>;
     using PIDExtraction = std::function<void(int, const std::string&)>;
 
     void registerCallBack(const KeyboardCallback &cb);

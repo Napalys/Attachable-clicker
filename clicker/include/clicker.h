@@ -6,12 +6,9 @@
 #include "routine.h"
 #include <vector>
 #include <thread>
+#include <variant>
 
 class Clicker {
-private:
-    bool clickerStatus = false;
-    std::vector<std::thread> jobs{};
-    std::vector<Routine> routines;
 public:
     std::shared_ptr<ProcessHandler::ProcessManager> process_manager;
 
@@ -21,17 +18,15 @@ public:
 
     [[nodiscard]] bool getClickerStatus() const;
 
-    //void startClicking(const clickerData& data);
-
-    void addRoutine(std::vector<ClickerData> routine);
+    void addRoutine(std::vector<std::variant<ClickerData, Delay>> routine);
 
     void startRoutines() noexcept;
 
     void stopRoutines() noexcept;
 
-    void initClickerThreads(std::vector<ClickerData> &data);
-
-    void destroyClickerThreads();
+private:
+    bool clickerStatus = false;
+    std::vector<Routine> routines;
 };
 
 #endif // CLICKER_H

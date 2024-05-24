@@ -11,6 +11,8 @@
 #include <cstring>
 #include <string>
 #include <thread>
+#include <mutex>
+
 
 #ifdef WIN32
 #include <windows.h>
@@ -30,6 +32,12 @@ namespace ProcessHandler {
     static std::unordered_map<DWORD, bool> keyState;
 #endif
 
+    std::mutex callbackMutex;
+
+    void safeCallback(const std::variant<ClickerData, Delay>& data) {
+        std::lock_guard<std::mutex> lock(callbackMutex);
+        callback(data);
+    }
 
 #ifdef linux
 
@@ -61,7 +69,6 @@ namespace ProcessHandler {
                 libevdev_has_event_code(dev, EV_KEY, KEY_ENTER) &&
                 libevdev_has_event_code(dev, EV_KEY, KEY_SPACE) &&
                 libevdev_has_event_code(dev, EV_KEY, KEY_F1) &&
-                std::string(libevdev_get_name(dev)).find("Keyboard") != std::string::npos &&
                 std::string(libevdev_get_name(dev)).find("Mouse") == std::string::npos) {
                 libevdev_free(dev);
                 closedir(dir);
@@ -111,12 +118,12 @@ namespace ProcessHandler {
                                 formatted_key_name = formatted_key_name.substr(prefix_length);
                             }
                         }
-                        ClickerData clickerData(ev.code, static_cast<uint32_t>(delay), event, formatted_key_name);
-                        callback(clickerData);
+                        ClickerData clickerData(ev.code, event, formatted_key_name);
+                        safeCallback(Delay(static_cast<uint32_t>(delay)));
+                        safeCallback(clickerData);
                     }
                 }
             }
-
             libevdev_free(dev);
             close(fd);
             std::cout << "Closed" << std::endl;
@@ -147,9 +154,10 @@ namespace ProcessHandler {
             auto currentKeyPressTime = std::chrono::steady_clock::now();
             auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(
                     currentKeyPressTime - lastKeyPressTime).count();
-            ClickerData clickerData(pKeyBoard->vkCode, static_cast<uint32_t>(delay), ClickerData::Event::Pressed,
+            ClickerData clickerData(pKeyBoard->vkCode, ClickerData::Event::Pressed,
                                     GetKeyName(pKeyBoard->vkCode));
-            callback(clickerData);
+            safeCallback(Delay(static_cast<uint32_t>(delay)));
+            safeCallback(clickerData);
             lastKeyPressTime = currentKeyPressTime;
           }
         } else if (wParam == WM_KEYUP || wParam == WM_SYSKEYUP) {
@@ -158,9 +166,10 @@ namespace ProcessHandler {
             auto currentKeyPressTime = std::chrono::steady_clock::now();
             auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(
                     currentKeyPressTime - lastKeyPressTime).count();
-            ClickerData clickerData(pKeyBoard->vkCode, static_cast<uint32_t>(delay), ClickerData::Event::Released,
+            ClickerData clickerData(pKeyBoard->vkCode, ClickerData::Event::Released,
                                     GetKeyName(pKeyBoard->vkCode));
-            callback(clickerData);
+            safeCallback(Delay(static_cast<uint32_t>(delay)));
+            safeCallback(clickerData);
             lastKeyPressTime = currentKeyPressTime;
           }
         }

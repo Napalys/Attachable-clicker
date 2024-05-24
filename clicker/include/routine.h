@@ -9,13 +9,14 @@
 #include <thread>
 #include <vector>
 #include <memory>
+#include <variant>
 #include "clicker_data.h"
 #include "process_handler/process_manager.h"
 
 class Routine {
 public:
     explicit Routine(std::shared_ptr<ProcessHandler::ProcessManager> process_manager);
-    explicit Routine(std::shared_ptr<ProcessHandler::ProcessManager> process_manager, std::vector<ClickerData> clicks);
+    explicit Routine(std::shared_ptr<ProcessHandler::ProcessManager> process_manager, std::vector<std::variant<ClickerData, Delay>> clicks);
 
     Routine(Routine&& other) noexcept = default;
     Routine& operator=(Routine&& other) noexcept = default;
@@ -29,7 +30,7 @@ public:
 
 private:
     std::shared_ptr<ProcessHandler::ProcessManager> process_manager;
-    std::vector<ClickerData> clicks{};
+    std::vector<std::variant<ClickerData, Delay>> clicks{};
     bool running = false;
     std::thread runner;
 };

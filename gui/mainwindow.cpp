@@ -8,6 +8,7 @@
 #include <QStyledItemDelegate>
 #include <QFileDialog>
 #include <QTextStream>
+#include <QBrush>
 
 #include "delegates/non_editable_delegate.hpp"
 #include "delegates/numeric_delegate.hpp"
@@ -35,14 +36,16 @@ void setupTable(QTableWidget* table) {
 
 
 
-MainWindow::MainWindow(QWidget *parent)
-        : QMainWindow(parent), ui(new Ui::MainWindow) {
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     setupTable(ui->tableWidget);
     ui->label->setOpenExternalLinks(true);
     connect(ui->actionSave, &QAction::triggered, this, &MainWindow::saveRoutineData);
     connect(ui->actionLoad, &QAction::triggered, this, &MainWindow::loadRoutineData);
+    qRegisterMetaType<std::shared_ptr<ClickerData>>("std::shared_ptr<ClickerData>");
+    qRegisterMetaType<std::shared_ptr<Delay>>("std::shared_ptr<Delay>");
+    qRegisterMetaType<QItemSelection>();
 }
 
 MainWindow::~MainWindow() {
@@ -69,71 +72,109 @@ void MainWindow::on_pushButton_Start_clicked() {
         return;
     }
 
-    if (!clicker->getClickerStatus()) {
-        std::vector<ClickerData> keyEvents = extractAllDataFromTable();
-        clicker->setClickerStatus(true);
-        ui->pushButton_Start->setText("Stop");
-        clicker->initClickerThreads(keyEvents);
-    } else {
-        clicker->setClickerStatus(false);
-        ui->pushButton_Start->setText("Start");
-        QMessageBox::warning(nullptr, "Warning",
-                             "Waiting for clicker to finish task, This may take up to max declared ms");
-        clicker->destroyClickerThreads();
-    }
+    if (!clicker->getClickerStatus()) enableClicker();
+    else disableClicker();
 }
 
-std::vector<ClickerData> MainWindow::extractAllDataFromTable() {
-    std::vector<ClickerData> allData;
+void MainWindow::enableClicker(){
+    auto keyEvents = extractAllDataFromTable();
+    clicker->setClickerStatus(true);
+    ui->pushButton_Start->setText("Stop");
+    clicker->addRoutine(keyEvents);
+    clicker->startRoutines();
+}
+
+void MainWindow::disableClicker(){
+    clicker->setClickerStatus(false);
+    ui->pushButton_Start->setText("Start");
+    QMessageBox::warning(nullptr, "Warning",
+                         "Waiting for clicker to finish task, This may take up to max declared ms");
+    clicker->stopRoutines();
+}
+
+std::vector<std::variant<ClickerData, Delay>> MainWindow::extractAllDataFromTable() {
+    std::vector<std::variant<ClickerData, Delay>> allData;
     int rowCount = ui->tableWidget->rowCount();
 
     for (int i = 0; i < rowCount; ++i) {
-        ClickerData data;
-        QTableWidgetItem* nameItem = ui->tableWidget->item(i, 0);
-        QTableWidgetItem* keyItem = ui->tableWidget->item(i, 1);
-        QTableWidgetItem* delayItem = ui->tableWidget->item(i, 2);
-        QTableWidgetItem* actionItem = ui->tableWidget->item(i, 3);
-
-        if (nameItem) data.key_name = nameItem->text().toStdString();
-        if (keyItem) data.key_code = keyItem->text().toInt();
-        if (delayItem) data.delay = delayItem->text().toInt();
-        if (actionItem) {
-            std::string action = actionItem->text().toStdString();
-            data.event = (action == "Pressed") ? ClickerData::Event::Pressed : ClickerData::Event::Released;
+        QVariant userData = ui->tableWidget->item(i, 0)->data(Qt::UserRole);
+        if (userData.canConvert<std::shared_ptr<ClickerData>>()) {
+            auto clickerData = qvariant_cast<std::shared_ptr<ClickerData>>(userData);
+            allData.emplace_back(*clickerData);
+        } else if (userData.canConvert<std::shared_ptr<Delay>>()) {
+            auto delayData = qvariant_cast<std::shared_ptr<Delay>>(userData);
+            allData.emplace_back(*delayData);
         }
-        allData.push_back(data);
     }
 
     return allData;
 }
 
-void MainWindow::addRowToTable(const ClickerData& data) {
+struct PtrCreatorVisitor {
+    QVariant operator()(const ClickerData& data) const {
+        return QVariant::fromValue(std::make_shared<ClickerData>(data));
+    }
+
+    QVariant operator()(const Delay& data) const {
+        return QVariant::fromValue(std::make_shared<Delay>(data));
+    }
+};
+
+
+
+void MainWindow::addRowToTable(const std::variant<ClickerData, Delay>& data) {
     int row = ui->tableWidget->currentRow() + 1;
     if (row == 0) {
         row = ui->tableWidget->rowCount();
     }
-    std::cout << "Add key" <<( data.event == ClickerData::Event::Pressed ? "Pressed" : "Released" )<< std::endl;
 
     ui->tableWidget->insertRow(row);
 
-    auto *name = new QTableWidgetItem(QString(data.key_name.data()));
-    ui->tableWidget->setItem(row, 0, name);
+    std::visit([&](auto&& arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, ClickerData>) {
+            // Handling ClickerData
+            auto *name = new QTableWidgetItem(QString::fromStdString(arg.key_name));
+            auto *keyItem = new QTableWidgetItem(QString::number(arg.key_code));
+            auto *action = new QTableWidgetItem(arg.event == ClickerData::Event::Pressed ? "Pressed" : "Released");
+            auto *placeholder = new QTableWidgetItem();  // Placeholder for the fourth column
 
-    auto *keyItem = new QTableWidgetItem(QString::number(data.key_code));
-    ui->tableWidget->setItem(row, 1, keyItem);
+            // Set items to the table
+            ui->tableWidget->setItem(row, 0, name);
+            ui->tableWidget->setItem(row, 1, keyItem);
+            ui->tableWidget->setItem(row, 2, placeholder);
+            ui->tableWidget->setItem(row, 3, action);
 
-    auto *delayItem = new QTableWidgetItem(QString::number(data.delay));
-    ui->tableWidget->setItem(row, 2, delayItem);
+            // Gray out the unused fourth column
+            placeholder->setFlags(placeholder->flags() ^ Qt::ItemIsEditable);
+            placeholder->setBackground(QBrush(Qt::darkGray));
+        } else if constexpr (std::is_same_v<T, Delay>) {
+            // Handling Delay
+            auto *name = new QTableWidgetItem("Delay");
+            auto *delayTime = new QTableWidgetItem(QString::number(arg.delay));
+            auto *placeholder1 = new QTableWidgetItem();
+            auto *placeholder2 = new QTableWidgetItem();
 
-    auto *action = new QTableWidgetItem(data.event == ClickerData::Event::Pressed ? "Pressed" : "Released");
-    ui->tableWidget->setItem(row, 3, action);
+            ui->tableWidget->setItem(row, 0, name);
+            ui->tableWidget->setItem(row, 1, placeholder1);
+            ui->tableWidget->setItem(row, 2, delayTime);
+            ui->tableWidget->setItem(row, 3, placeholder2);
+
+            placeholder1->setFlags(placeholder1->flags() ^ Qt::ItemIsEditable);
+            placeholder1->setBackground(QBrush(Qt::darkGray));
+            placeholder2->setFlags(placeholder2->flags() ^ Qt::ItemIsEditable);
+            placeholder2->setBackground(QBrush(Qt::darkGray));
+        }
+    }, data);
+
+    ui->tableWidget->item(row, 0)->setData(Qt::UserRole, std::visit(PtrCreatorVisitor{}, data));
     ui->tableWidget->setCurrentCell(row, 0);
-    ui->tableWidget->scrollToItem(name);
+    ui->tableWidget->scrollToItem(ui->tableWidget->item(row, 0));
 }
 
 
+
 void MainWindow::on_pushButton_select_window_clicked() {
-    extractAllDataFromTable();
     ProcessHandler::callBackOnPIDExtracted([&](int pid, const std::string& title){
         try {
             clicker = std::make_unique<Clicker>(pid, title);
@@ -144,41 +185,34 @@ void MainWindow::on_pushButton_select_window_clicked() {
         }
         ui->lineEdit_PID->setText(QString::number(pid));
         ui->lineEdit_tittle->setText(QString(title.data()));
-        ui->lineEdit_PID->setReadOnly(true);
-        ui->lineEdit_tittle->setReadOnly(true);
-        auto *palette = new QPalette();
-        palette->setColor(QPalette::Base, Qt::gray);
-        palette->setColor(QPalette::Text, Qt::black);
-        ui->lineEdit_PID->setPalette(*palette);
-        ui->lineEdit_tittle->setPalette(*palette);
-        ui->pushButton_PID->setEnabled(false);
-        ui->pushButton_PID->setAutoFillBackground(true);
-        ui->pushButton_PID->setStyleSheet("background-color: rgb(50, 165, 89); color: rgb(255, 255, 255)");
-        ui->pushButton_PID->setText("Success!");
+        setPIDFoundSuccessful();
     });
-    std::cout << "on_select_PID_clicked select" << std::endl;
 }
 
 void MainWindow::on_pushButton_record_clicked() {
-    if (isRecording) {
-        ProcessHandler::removeCallBack();
-        ui->pushButton_record->setStyleSheet("");
-        ui->pushButton_record->setText("Record Key strokes");
-        std::cout << "on_pushButton_record_clicked unselect" << std::endl;
-    } else {
-        try {
-            ProcessHandler::registerCallBack([&](const ClickerData& data){
-                addRowToTable(data);
-            });
-        }
-        catch (const std::exception &e) {
-            createErrorBox(e.what());
-            return;
-        }
-        ui->pushButton_record->setStyleSheet("background-color: rgb(220, 20, 60); color: rgb(255, 255, 255)");
-        ui->pushButton_record->setText("Stop recording");
-        std::cout << "on_pushButton_record_clicked select" << std::endl;
+    if (isRecording) disableKeyStrokeRecording();
+    else enableKeyStrokeRecording();
+}
+
+void MainWindow::enableKeyStrokeRecording() {
+    try {
+        ProcessHandler::registerCallBack([&](const std::variant<ClickerData, Delay>& data) {
+            addRowToTable(data);
+        });
     }
+    catch (const std::exception &e) {
+        createErrorBox(e.what());
+        return;
+    }
+    ui->pushButton_record->setStyleSheet("background-color: rgb(220, 20, 60); color: rgb(255, 255, 255)");
+    ui->pushButton_record->setText("Stop recording");
+    isRecording = !isRecording;
+}
+
+void MainWindow::disableKeyStrokeRecording() {
+    ProcessHandler::removeCallBack();
+    ui->pushButton_record->setStyleSheet("");
+    ui->pushButton_record->setText("Record Key strokes");
     isRecording = !isRecording;
 }
 
@@ -199,7 +233,11 @@ void MainWindow::on_pushButton_PID_clicked() {
         createErrorBox(std::string("PID with such name not found. Did you mean? ") + e.what());
         return;
     }
+    setPIDFoundSuccessful();
+}
 
+
+void MainWindow::setPIDFoundSuccessful() {
     ui->lineEdit_PID->setReadOnly(true);
     ui->lineEdit_tittle->setReadOnly(true);
     auto *palette = new QPalette();
@@ -213,13 +251,15 @@ void MainWindow::on_pushButton_PID_clicked() {
     ui->pushButton_PID->setText("Success!");
 }
 
+
+
 void MainWindow::on_pushButton_delete_key_clicked() {
     int selectedRow = ui->tableWidget->selectionModel()->currentIndex().row();
-    if (selectedRow >= 0) {
-        ui->tableWidget->removeRow(selectedRow);
-    }else{
+    if (selectedRow < 0) {
         createErrorBox(std::string("First select row to be removed"));
+        return;
     }
+    ui->tableWidget->removeRow(selectedRow);
 }
 
 void MainWindow::on_pushButton_insert_key_clicked() {
@@ -231,16 +271,20 @@ void MainWindow::on_pushButton_insert_key_clicked() {
 }
 
 void MainWindow::saveRoutineData() {
-    nlohmann::json jsonData = extractAllDataFromTable();
+    auto allData = extractAllDataFromTable();
+    nlohmann::json jsonData;
+
+    for (auto &data: allData) {
+        jsonData.push_back(std::visit([](auto &&arg) -> nlohmann::json {
+            return arg;
+        }, data));
+    }
+
     const auto initialDir = QDir::currentPath() + "/Routines";
     QDir().mkpath(initialDir);
     QString defaultFileName = initialDir + "/Untitled.json";
-    QString fileName = QFileDialog::getSaveFileName(
-            this,
-            "Save File",
-            defaultFileName,
-            "JSON Files (*.json);;All Files (*)"
-    );
+    QString fileName = QFileDialog::getSaveFileName(this, "Save File", defaultFileName,
+                                                    "JSON Files (*.json);;All Files (*)");
 
     if (fileName.isEmpty()) return;
 
@@ -250,22 +294,27 @@ void MainWindow::saveRoutineData() {
         return;
     }
 
-    QTextStream out(&file);
-    out << QString(jsonData.dump(4).data());
-    file.close();
+    try {
+        QTextStream out(&file);
+        out << QString::fromStdString(jsonData.dump(4));
+        file.close();
+    } catch (const std::exception& e) {
+        QMessageBox::critical(this, "Error", QString("Failed to save data: %1").arg(e.what()));
+        file.close();
+        return;
+    }
+
 }
 
 void MainWindow::loadRoutineData() {
     const QString initialDir = QDir::currentPath() + "/Routines";
     QDir().mkpath(initialDir);
     QString defaultFileName = initialDir + "/Untitled.json";
-    QString fileName = QFileDialog::getOpenFileName(
-            this,
-            "Open File",
-            defaultFileName,
-            "JSON Files (*.json);;All Files (*)"
-    );
-    if (fileName.isEmpty()) return;
+    QString fileName = QFileDialog::getOpenFileName(this, "Open File", defaultFileName, "JSON Files (*.json);;All Files (*)");
+
+    if (fileName.isEmpty()) {
+        return;
+    }
 
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -278,19 +327,39 @@ void MainWindow::loadRoutineData() {
     file.close();
 
     nlohmann::json jsonData;
-    try{
-        jsonData = nlohmann::json::parse(rawData, nullptr, true, true);
-    }catch (const nlohmann::json::parse_error &e){
-        createErrorBox(std::string("Error while loading routine: ") + e.what());
+    try {
+        jsonData = nlohmann::json::parse(rawData);
+    } catch (const nlohmann::json::parse_error& e) {
+        createErrorBox("Error while loading routine: JSON parsing error - " + std::string(e.what()));
         return;
     }
-    const auto dataVec = jsonData.get<std::vector<ClickerData>>();
 
     ui->tableWidget->clear();
     ui->tableWidget->setRowCount(0);
     setupTable(ui->tableWidget);
+    bool error = false;
+    for (const auto& item : jsonData) {
+        if (!item.contains("type") || !item["type"].is_string()) {
+            error = true;
+            continue;
+        }
 
-    for(const auto& data : dataVec) {
-        addRowToTable(data);
+        auto type = item["type"].get<std::string>();
+        if (type == "ClickerData") {
+            if (item.contains("key_name") && item.contains("key_code") && item.contains("event")) {
+                addRowToTable(item.get<ClickerData>());
+            } else {
+                createErrorBox("Missing fields in ClickerData object.");
+            }
+        } else if (type == "Delay") {
+            if (item.contains("delay")) {
+                addRowToTable(item.get<Delay>());
+            } else {
+                createErrorBox("Missing 'delay' field in Delay object.");
+            }
+        } else {
+            createErrorBox("Unknown type in JSON data: " + type);
+        }
     }
+    if(error)createErrorBox("Error in JSON data: Missing or invalid 'type' key.");
 }
