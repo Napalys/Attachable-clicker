@@ -2,8 +2,6 @@ name: Compile and Release Qt5 Windows
 
 on:
   push:
-    branches:
-      - main
     tags:
       - '*'
   pull_request:
@@ -28,7 +26,6 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Cache Qt and MinGW
-        id: cache-qt-mingw
         uses: actions/cache@v2
         with:
           path: |
@@ -64,9 +61,9 @@ jobs:
 
       - name: Configure CMake Project
         working-directory: ${{github.workspace}}
-        env:
-          CMAKE_PREFIX_PATH: "${{github.workspace}}/Qt/${{ env.QT_VERSION }}/${{ env.MINGW_PATH }}"
-        run: cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -G "MinGW Makefiles" -B ${{github.workspace}}/build
+        run: |
+          $Qt5_DIR="${{github.workspace}}/Qt/${{ env.QT_VERSION }}/${{ env.MINGW_PATH }}/lib/cmake/Qt5"
+          cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DQt5_DIR=$Qt5_DIR -G "MinGW Makefiles" -B ${{github.workspace}}/build
 
       - name: Build project
         working-directory: ${{github.workspace}}/build
@@ -84,13 +81,22 @@ jobs:
         with:
           name: injectionClicker-${{ github.run_number }}
           path: ${{github.workspace}}/build/artifacts/
-
-      - name: Release
-        if: startsWith(github.ref, 'refs/tags/')
+          
+      - name: Zip the application
+        run: |
+          Compress-Archive -Path ${{ github.workspace }}/build/artifacts/* -DestinationPath ${{ github.workspace }}/injectionClicker-${{ github.run_number }}.zip
+      
+      - name: List files in the workspace
+        run: |
+          Get-ChildItem -Path ${{ github.workspace }} -Force | Select-Object Mode, LastWriteTime, Length, Name | Format-Table -AutoSize
+      
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           name: Release ${{ github.ref_name }}
           body: Release of version ${{ github.ref_name }}
-          files: ${{github.workspace}}/build/artifacts/**
+          files: ./injectionClicker-${{ github.run_number }}.zip
         env:
-          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    
