@@ -1,0 +1,78 @@
+name: Build windows and linux
+
+on: push
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Cache Python Packages on Windows
+        if: runner.os == 'Windows'
+        uses: actions/cache@v2
+        with:
+          path: ~\AppData\Local\Pip\Cache
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies on Ubuntu
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libevdev-dev qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools libqt5widgets5
+
+      - name: Install aqtinstall on Windows
+        if: runner.os == 'Windows'
+        run: |
+          python -m pip install aqtinstall
+
+      - name: List Qt versions available
+        if: runner.os == 'Windows'
+        run: |
+          python -m aqt list-qt windows desktop
+
+      - name: List architectures for Qt 5.15.2
+        if: runner.os == 'Windows'
+        run: |
+          python -m aqt list-qt windows desktop --arch 5.15.2
+
+      - name: Cache Qt Installation on Windows
+        if: runner.os == 'Windows'
+        id: qt-cache
+        uses: actions/cache@v2
+        with:
+          path: C:\Qt
+          key: ${{ runner.os }}-qt-5.15.2-${{ hashFiles('**/CMakeLists.txt') }}
+
+      - name: Install Qt using aqtinstall
+        if: runner.os == 'Windows' && steps.qt-cache.outputs.cache-hit != 'true'
+        run: |
+          python -m aqt install-qt windows desktop 5.15.2 win64_mingw81 --outputdir C:\Qt
+
+      - name: Configure CMake for Ubuntu
+        if: runner.os == 'Linux'
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_PREFIX_PATH="/usr/lib/x86_64-linux-gnu/qt5"
+
+      - name: Configure CMake for Windows with MinGW
+        if: runner.os == 'Windows'
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G "MinGW Makefiles" -DCMAKE_SH="CMAKE_SH-NOTFOUND" -DCMAKE_PREFIX_PATH="C:\Qt\5.15.2\mingw81_64"
+
+      - name: Build the Project
+        run: |
+          cd build
+          cmake --build . --config Release
