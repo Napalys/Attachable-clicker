@@ -1,0 +1,22 @@
+//
+// Created by Widok on 5/20/24.
+//
+
+#ifndef INJECTIONCLICKER_KEYBOARD_CALLBACK_H
+#define INJECTIONCLICKER_KEYBOARD_CALLBACK_H
+
+#include <functional>
+#include "clicker_data.h"
+#include <variant>
+
+namespace ProcessHandler {
+    using KeyboardCallback = std::function<void(std::variant<ClickerData, Delay>)>;
+    using PIDExtraction = std::function<void(int, const std::string&)>;
+
+    void registerCallBack(const KeyboardCallback &cb);
+
+    void callBackOnPIDExtracted(const PIDExtraction &on_pid_extracted);
+
+    void removeCallBack();
+}
+#endif //INJECTIONCLICKER_KEYBOARD_CALLBACK_H
