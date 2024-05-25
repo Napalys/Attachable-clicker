@@ -32,6 +32,28 @@ void setupTable(QTableWidget* table) {
     auto* actionDelegate = new GUI::Delegates::ActionDelegate(table);
     table->setItemDelegateForColumn(3, actionDelegate);
     table->verticalHeader()->hide();
+    QObject::connect(table, &QTableWidget::itemChanged, [table](QTableWidgetItem* item) {
+        int row = item->row();
+        int column = item->column();
+
+        QTableWidgetItem* firstColumnItem = table->item(row, 0);
+        if (!firstColumnItem) return;
+
+        QVariant userData = firstColumnItem->data(Qt::UserRole);
+
+        if (userData.canConvert<std::shared_ptr<ClickerData>>()) {
+            auto clickerData = qvariant_cast<std::shared_ptr<ClickerData>>(userData);
+            if (column == 3) {
+                clickerData->event = (clickerData->event == ClickerData::Event::Pressed) ?
+                                     ClickerData::Event::Released : ClickerData::Event::Pressed;
+            }
+        } else if (userData.canConvert<std::shared_ptr<Delay>>()) {
+            auto delayData = qvariant_cast<std::shared_ptr<Delay>>(userData);
+            if (column == 2) {
+                delayData->delay = item->text().toInt();
+            }
+        }
+    });
 }
 
 
