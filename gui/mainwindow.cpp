@@ -301,8 +301,10 @@ void MainWindow::saveRoutineData() {
     auto allData = extractAllDataFromTable();
     nlohmann::json jsonData;
 
+    jsonData["version"] = InjectionClicker::cmake::project_version.data();
+
     for (auto &data: allData) {
-        jsonData.push_back(std::visit([](auto &&arg) -> nlohmann::json {
+        jsonData["routine"].push_back(std::visit([](auto &&arg) -> nlohmann::json {
             return arg;
         }, data));
     }
@@ -361,11 +363,20 @@ void MainWindow::loadRoutineData() {
         return;
     }
 
+    if (!jsonData.contains("version") || jsonData["version"] != InjectionClicker::cmake::project_version.data()) {
+        createErrorBox("Warning: JSON file version mismatch or missing version.");
+    }
+
+    if (!jsonData.contains("routine") || !jsonData["routine"].is_array()) {
+        createErrorBox("Error in JSON structure: Missing or invalid 'routine' key.");
+        return;
+    }
+
     ui->tableWidget->clear();
     ui->tableWidget->setRowCount(0);
     setupTable(ui->tableWidget);
     bool error = false;
-    for (const auto& item : jsonData) {
+    for (const auto& item : jsonData["routine"]) {
         if (!item.contains("type") || !item["type"].is_string()) {
             error = true;
             continue;
