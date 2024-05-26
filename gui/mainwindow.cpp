@@ -12,22 +12,30 @@
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
-    tableManager = new GUI::TableManager(ui->tableWidget);
+    initializeUI();
+    connectSignals();
+}
+
+void MainWindow::initializeUI() {
+    tableManager = std::make_unique<GUI::TableManager>(ui->tableWidget);
     tableManager->setupTable();
-    QString title = QString("%1 %2").arg(InjectionClicker::cmake::project_name.data(),InjectionClicker::cmake::project_version.data());
-    setWindowTitle(title);
+    setWindowTitle(QString("%1 %2").arg(InjectionClicker::cmake::project_name.data(), InjectionClicker::cmake::project_version.data()));
+    ui->label->setEnabled(true);
     ui->label->setOpenExternalLinks(true);
+}
+
+void MainWindow::connectSignals() {
     connect(ui->actionSave, &QAction::triggered, this, &MainWindow::saveRoutineData);
     connect(ui->actionLoad, &QAction::triggered, this, &MainWindow::loadRoutineData);
     qRegisterMetaType<QItemSelection>();
 }
 
-MainWindow::~MainWindow() {
-    delete ui;
+void MainWindow::createErrorBox(const std::string &errorMsg) {
+    QMessageBox::warning(nullptr, "Error", errorMsg.c_str());
 }
 
-void createErrorBox(const std::string &errorMsg) {
-    QMessageBox::warning(nullptr, "Error", errorMsg.c_str());
+MainWindow::~MainWindow() {
+    delete ui;
 }
 
 void MainWindow::on_pushButton_Start_clicked() {
@@ -61,8 +69,7 @@ void MainWindow::enableClicker(){
 void MainWindow::disableClicker(){
     clicker->setClickerStatus(false);
     ui->pushButton_Start->setText("Start");
-    QMessageBox::warning(nullptr, "Warning",
-                         "Waiting for clicker to finish task, This may take up to max declared ms");
+    createErrorBox("Waiting for clicker to finish task, This may take up to max declared ms");
     clicker->stopRoutines();
 }
 
@@ -178,7 +185,7 @@ void MainWindow::saveRoutineData() {
 
     QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QMessageBox::warning(this, "Error", "Could not open file for writing.");
+        createErrorBox("Could not open file for writing.");
         return;
     }
 
@@ -187,7 +194,7 @@ void MainWindow::saveRoutineData() {
         out << QString::fromStdString(jsonData.dump(4));
         file.close();
     } catch (const std::exception& e) {
-        QMessageBox::critical(this, "Error", QString("Failed to save data: %1").arg(e.what()));
+        createErrorBox(std::string("Failed to save data: ") + e.what());
         file.close();
         return;
     }
@@ -206,7 +213,7 @@ void MainWindow::loadRoutineData() {
 
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QMessageBox::warning(this, "Error", "Could not open file for reading.");
+        createErrorBox("Could not open file for reading.");
         return;
     }
 

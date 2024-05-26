@@ -43,10 +43,13 @@ private:
     void disableKeyStrokeRecording();
     void enableClicker();
     void disableClicker();
+    void initializeUI();
+    void connectSignals();
+    static void createErrorBox(const std::string &errorMsg);
 
 private:
     Ui::MainWindow *ui;
-    GUI::TableManager* tableManager;
+    std::unique_ptr<GUI::TableManager> tableManager;
     std::unique_ptr<Clicker> clicker = nullptr;
     bool isRecording = false;
 };
