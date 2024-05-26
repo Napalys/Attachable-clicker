@@ -14,6 +14,7 @@
 #include "delegates/numeric_delegate.hpp"
 #include "delegates/action_delegate.hpp"
 #include "dialogs/clicker_data_dialog.h"
+#include "config.hpp"
 
 void setupTable(QTableWidget* table) {
     table->setColumnCount(4);
@@ -60,6 +61,10 @@ void setupTable(QTableWidget* table) {
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
+    QString title = QString("%1 %2").arg(InjectionClicker::cmake::project_name.data(),
+                                         InjectionClicker::cmake::project_version.data());
+    setWindowTitle(title);
+
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     setupTable(ui->tableWidget);
     ui->label->setOpenExternalLinks(true);

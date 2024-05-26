@@ -1,8 +1,20 @@
 cmake_minimum_required(VERSION 3.10)
-project(injectionClicker)
+project(injectionClicker  VERSION 1.0.0
+        DESCRIPTION ""
+        HOMEPAGE_URL "https://github.com/Napalys/Attachable-clicker"
+        LANGUAGES CXX C)
 
-set(CMAKE_CXX_STANDARD 17)
+if (NOT DEFINED CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 17)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(GIT_SHA "Unknown" CACHE STRING "SHA this build was generated from")
+
+string(SUBSTRING "${GIT_SHA}"
+        0
+        8
+        GIT_SHORT_SHA)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
@@ -11,6 +23,7 @@ set(CMAKE_AUTORCC ON)
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 add_subdirectory(clicker)
+add_subdirectory(configured_files)
 
 add_executable(${PROJECT_NAME} main.cpp
         gui/mainwindow.cpp
@@ -42,4 +55,9 @@ endif()
 target_compile_options(${PROJECT_NAME} PRIVATE
         $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Wpedantic -Werror>
         $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+        ${CMAKE_BINARY_DIR}/configured_files/include/internal_use_only
+        gui
 )
