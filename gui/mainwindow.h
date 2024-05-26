@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include "clicker_data.h"
 #include "clicker.h"
+#include "managers/table_manager.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -16,8 +17,6 @@ QT_END_NAMESPACE
 #include <QComboBox>
 #include <QFileDialog>
 
-Q_DECLARE_METATYPE(std::shared_ptr<ClickerData>)
-Q_DECLARE_METATYPE(std::shared_ptr<Delay>)
 
 class MainWindow : public QMainWindow {
 Q_OBJECT
@@ -36,6 +35,7 @@ private slots:
     void on_pushButton_record_clicked();
     void on_pushButton_select_window_clicked();
 
+private:
     void saveRoutineData();
     void loadRoutineData();
     void setPIDFoundSuccessful();
@@ -43,11 +43,10 @@ private slots:
     void disableKeyStrokeRecording();
     void enableClicker();
     void disableClicker();
-    void addRowToTable(const std::variant<ClickerData, Delay>& data);
-    std::vector<std::variant<ClickerData, Delay>> extractAllDataFromTable();
 
 private:
     Ui::MainWindow *ui;
+    GUI::TableManager* tableManager;
     std::unique_ptr<Clicker> clicker = nullptr;
     bool isRecording = false;
 };

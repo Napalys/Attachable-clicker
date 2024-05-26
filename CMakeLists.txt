@@ -33,6 +33,8 @@ add_executable(${PROJECT_NAME} main.cpp
         gui/delegates/action_delegate.hpp
         gui/dialogs/clicker_data_dialog.cpp
         gui/dialogs/clicker_data_dialog.h
+        gui/managers/table_manager.cpp
+        gui/managers/table_manager.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE gui)

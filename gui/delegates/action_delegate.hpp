@@ -5,6 +5,9 @@
 #ifndef INJECTIONCLICKER_ACTION_DELEGATE_HPP
 #define INJECTIONCLICKER_ACTION_DELEGATE_HPP
 
+#include <QStyledItemDelegate>
+#include <QComboBox>
+
 namespace GUI::Delegates {
 
     class ActionDelegate : public QStyledItemDelegate {
