@@ -23,6 +23,7 @@ set(CMAKE_AUTORCC ON)
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
 add_subdirectory(clicker)
+add_subdirectory(discord)
 add_subdirectory(configured_files)
 
 add_executable(${PROJECT_NAME} main.cpp
@@ -35,12 +36,15 @@ add_executable(${PROJECT_NAME} main.cpp
         gui/dialogs/clicker_data_dialog.h
         gui/managers/table_manager.cpp
         gui/managers/table_manager.h
+        discord/src/discord_bot.cpp
+        discord/include/discord_bot.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE gui)
 target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt5::Widgets
         clicker_lib
+        Notifier
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
