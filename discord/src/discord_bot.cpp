@@ -24,7 +24,10 @@ namespace Notification {
 
         void run() {
             try {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Waddress"
                 bot.start(&dpp::set_nonblocking);
+#pragma GCC diagnostic pop
             } catch (const dpp::exception& e) {
                 std::cerr << "Failed to start the Discord bot: " << e.what() << std::endl;
                 throw std::runtime_error(e.what());
