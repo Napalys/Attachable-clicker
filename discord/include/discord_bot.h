@@ -9,7 +9,9 @@ namespace Notification {
 
     class DiscordBot {
     public:
-        explicit DiscordBot(const std::string& token);
+        using LogCallback = std::function<void(const std::string&)>;
+
+        explicit DiscordBot(const std::string& token, LogCallback log_callback = nullptr);
         ~DiscordBot() noexcept;
         void run();
 
