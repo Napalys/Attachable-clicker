@@ -134,7 +134,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>180</y>
+      <y>50</y>
       <width>261</width>
       <height>131</height>
      </rect>
@@ -234,9 +234,55 @@
      </property>
     </widget>
    </widget>
+   <widget class="QGroupBox" name="notifications">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>200</y>
+      <width>261</width>
+      <height>201</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Notification handler</string>
+    </property>
+    <widget class="QLineEdit" name="lineEdit_bot_token">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>131</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="placeholderText">
+      <string>Bot token</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_Register_Bot">
+     <property name="geometry">
+      <rect>
+       <x>150</x>
+       <y>30</y>
+       <width>101</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Register bot</string>
+     </property>
+    </widget>
+   </widget>
    <zorder>injection_windows_group</zorder>
    <zorder>routine_group</zorder>
    <zorder>label</zorder>
+   <zorder>notifications</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

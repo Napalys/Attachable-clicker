@@ -8,6 +8,7 @@
 #include <QTextStream>
 #include "dialogs/clicker_data_dialog.h"
 #include "config.hpp"
+#include "discord_bot.h"
 
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
@@ -17,8 +18,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 }
 
 void MainWindow::initializeUI() {
-    tableManager = std::make_unique<GUI::TableManager>(ui->tableWidget);
-    tableManager->setupTable();
+    table_manager = std::make_unique<GUI::TableManager>(ui->tableWidget);
+    table_manager->setupTable();
     setWindowTitle(QString("%1 %2").arg(InjectionClicker::cmake::project_name.data(), InjectionClicker::cmake::project_version.data()));
     ui->label->setEnabled(true);
     ui->label->setOpenExternalLinks(true);
@@ -49,7 +50,7 @@ void MainWindow::on_pushButton_Start_clicked() {
         return;
     }
 
-    if(tableManager->isEmpty()){
+    if(table_manager->isEmpty()){
         createErrorBox("Please add some keys to be clicked");
         return;
     }
@@ -59,7 +60,7 @@ void MainWindow::on_pushButton_Start_clicked() {
 }
 
 void MainWindow::enableClicker(){
-    auto keyEvents = tableManager->extractAllData();
+    auto keyEvents = table_manager->extractAllData();
     clicker->setClickerStatus(true);
     ui->pushButton_Start->setText("Stop");
     clicker->addRoutine(keyEvents);
@@ -98,7 +99,7 @@ void MainWindow::on_pushButton_record_clicked() {
 void MainWindow::enableKeyStrokeRecording() {
     try {
         ProcessHandler::registerCallBack([&](const std::variant<ClickerData, Delay>& data) {
-            tableManager->addRow(data);
+            table_manager->addRow(data);
         });
     }
     catch (const std::exception &e) {
@@ -153,18 +154,18 @@ void MainWindow::setPIDFoundSuccessful() {
 
 
 void MainWindow::on_pushButton_delete_key_clicked() {
-    tableManager->deleteSelectedRow();
+    table_manager->deleteSelectedRow();
 }
 
 void MainWindow::on_pushButton_insert_key_clicked() {
     GUI::Dialogs::ClickerDataDialog dialog(this);
     if (dialog.exec() != QDialog::Accepted) return;
     ClickerData data = dialog.getClickerData();
-    tableManager->addRow(data);
+    table_manager->addRow(data);
 }
 
 void MainWindow::saveRoutineData() {
-    auto allData = tableManager->extractAllData();
+    auto allData = table_manager->extractAllData();
     nlohmann::json jsonData;
 
     jsonData["version"] = InjectionClicker::cmake::project_version.data();
@@ -239,7 +240,7 @@ void MainWindow::loadRoutineData() {
     }
 
 
-    tableManager->setupTable();
+    table_manager->setupTable();
     bool error = false;
     for (const auto& item : jsonData["routine"]) {
         if (!item.contains("type") || !item["type"].is_string()) {
@@ -250,13 +251,13 @@ void MainWindow::loadRoutineData() {
         auto type = item["type"].get<std::string>();
         if (type == "ClickerData") {
             if (item.contains("key_name") && item.contains("key_code") && item.contains("event")) {
-                tableManager->addRow(item.get<ClickerData>());
+                table_manager->addRow(item.get<ClickerData>());
             } else {
                 createErrorBox("Missing fields in ClickerData object.");
             }
         } else if (type == "Delay") {
             if (item.contains("delay")) {
-                tableManager->addRow(item.get<Delay>());
+                table_manager->addRow(item.get<Delay>());
             } else {
                 createErrorBox("Missing 'delay' field in Delay object.");
             }
@@ -265,4 +266,22 @@ void MainWindow::loadRoutineData() {
         }
     }
     if(error)createErrorBox("Error in JSON data: Missing or invalid 'type' key.");
+}
+
+void MainWindow::on_pushButton_Register_Bot_clicked() {
+    std::cout << "presed" << std::endl;
+
+    if (!bot) {
+        try{
+            bot = std::make_unique<Notification::DiscordBot>("", [](const std::string& s){
+                std::cout << s << std::endl;
+            });
+            bot->run();
+
+        }catch (const std::exception& e){
+            bot = nullptr;
+            createErrorBox(e.what());
+        }
+
+    }
 }

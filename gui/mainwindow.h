@@ -5,6 +5,7 @@
 #include "clicker_data.h"
 #include "clicker.h"
 #include "managers/table_manager.h"
+#include "discord_bot.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -34,6 +35,7 @@ private slots:
     void on_pushButton_insert_key_clicked();
     void on_pushButton_record_clicked();
     void on_pushButton_select_window_clicked();
+    void on_pushButton_Register_Bot_clicked();
 
 private:
     void saveRoutineData();
@@ -49,8 +51,9 @@ private:
 
 private:
     Ui::MainWindow *ui;
-    std::unique_ptr<GUI::TableManager> tableManager;
+    std::unique_ptr<GUI::TableManager> table_manager;
     std::unique_ptr<Clicker> clicker = nullptr;
+    std::unique_ptr<Notification::DiscordBot> bot = nullptr;
     bool isRecording = false;
 };
 
