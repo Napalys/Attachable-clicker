@@ -17,7 +17,7 @@ HWND receiveHWND(const uint32_t &dwProcessID, const std::string &processName) {
             vhWnds.emplace_back(hCurWnd);  // add the found hCurWnd to the vector
 
             std::wstring title(GetWindowTextLength(hCurWnd) + 1, L'\0');
-            GetWindowTextW(hCurWnd, &title[0], title.size());
+            GetWindowTextW(hCurWnd, &title[0], static_cast<int>(title.size()));
             std::string str(title.begin(), title.end());
             if (str.find(processName) != std::string::npos)
                 targetWindow = hCurWnd;
@@ -35,7 +35,7 @@ HWND receiveHWND(const uint32_t &dwProcessID, const std::string &processName) {
 
     for (auto &hwnd: vhWnds) {
         std::wstring title(GetWindowTextLength(hwnd) + 1, L'\0');
-        GetWindowTextW(hwnd, &title[0], title.size());
+        GetWindowTextW(hwnd, &title[0], static_cast<int>(title.size()));
         std::string str(title.begin(), title.end());
         //remove string terminator, thus after converting to char we do not lose data
         str.erase(std::find(str.begin(), str.end(), '\0'), str.end());
