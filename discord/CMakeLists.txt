@@ -1,13 +1,16 @@
 cmake_minimum_required(VERSION 3.10)
 project(Notifier)
 
-find_package(DPP REQUIRED)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+find_package(dpp CONFIG REQUIRED)
 
 include_directories(include)
 
 add_library(${PROJECT_NAME}
         src/discord_bot.cpp
-        include/discord_bot.h
+#        include/discord_bot.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -19,4 +22,4 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 )
 
 
-target_link_libraries(${PROJECT_NAME} dpp)
+target_link_libraries(${PROJECT_NAME} dpp::dpp)

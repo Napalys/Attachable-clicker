@@ -28,11 +28,12 @@ endif ()
 
 add_library(clicker_lib STATIC ${SOURCE_FILES} ${HEADER_FILES})
 target_include_directories(clicker_lib PUBLIC include ${json_SOURCE_DIR}/include)
+target_link_libraries(clicker_lib nlohmann_json::nlohmann_json)
 
 set_target_properties(clicker_lib PROPERTIES LINKER_LANGUAGE CXX)
 
 if(UNIX AND NOT APPLE)
     include_directories(${LIBEVDEV_INCLUDE_DIRS})
-    target_link_libraries(clicker_lib ${LIBEVDEV_LIBRARIES} nlohmann_json::nlohmann_json)
+    target_link_libraries(clicker_lib ${LIBEVDEV_LIBRARIES})
     target_compile_options(clicker_lib PUBLIC ${LIBEVDEV_CFLAGS_OTHER})
 endif ()

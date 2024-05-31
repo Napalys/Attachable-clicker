@@ -1,5 +1,6 @@
 #include "discord_bot.h"
 #include <dpp/cluster.h>
+
 #include <fstream>
 
 namespace Notification {
@@ -24,10 +25,16 @@ namespace Notification {
 
         void run() {
             try {
-#pragma GCC diagnostic push
+#if defined(__GNUC__) || defined(__clang__)
+                #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Waddress"
-                bot.start(&dpp::set_nonblocking);
+#endif
+
+                bot.start();
+
+#if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
+#endif
             } catch (const dpp::exception& e) {
                 std::cerr << "Failed to start the Discord bot: " << e.what() << std::endl;
                 throw std::runtime_error(e.what());

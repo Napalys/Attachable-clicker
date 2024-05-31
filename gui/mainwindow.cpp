@@ -98,8 +98,8 @@ void MainWindow::on_pushButton_record_clicked() {
 
 void MainWindow::enableKeyStrokeRecording() {
     try {
-        ProcessHandler::registerCallBack([&](const std::variant<ClickerData, Delay>& data) {
-            table_manager->addRow(data);
+        ProcessHandler::registerCallBack([&](const std::variant<ClickerData, Delay>& action) {
+            table_manager->addRow(action);
         });
     }
     catch (const std::exception &e) {
@@ -160,20 +160,20 @@ void MainWindow::on_pushButton_delete_key_clicked() {
 void MainWindow::on_pushButton_insert_key_clicked() {
     GUI::Dialogs::ClickerDataDialog dialog(this);
     if (dialog.exec() != QDialog::Accepted) return;
-    ClickerData data = dialog.getClickerData();
-    table_manager->addRow(data);
+    ClickerData clicker_data = dialog.getClickerData();
+    table_manager->addRow(clicker_data);
 }
 
 void MainWindow::saveRoutineData() {
-    auto allData = table_manager->extractAllData();
+    auto extracted_actions = table_manager->extractAllData();
     nlohmann::json jsonData;
 
     jsonData["version"] = InjectionClicker::cmake::project_version.data();
 
-    for (auto &data: allData) {
+    for (auto &action: extracted_actions) {
         jsonData["routine"].push_back(std::visit([](auto &&arg) -> nlohmann::json {
             return arg;
-        }, data));
+        }, action));
     }
 
     const auto initialDir = QDir::currentPath() + "/Routines";
