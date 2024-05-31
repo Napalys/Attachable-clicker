@@ -1,3 +1,4 @@
+cmake_minimum_required(VERSION 3.10)
 project(clicker_lib)
 
 set(HEADER_FILES include/clicker_data.h include/clicker.h
