@@ -30,7 +30,7 @@ namespace Notification {
 #pragma GCC diagnostic ignored "-Waddress"
 #endif
 
-                bot.start();
+                bot.start(dpp::st_return);
 
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop

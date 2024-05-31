@@ -10,7 +10,7 @@ include_directories(include)
 
 add_library(${PROJECT_NAME}
         src/discord_bot.cpp
-#        include/discord_bot.h
+        include/discord_bot.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -21,5 +21,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         include
 )
 
-
-target_link_libraries(${PROJECT_NAME} dpp::dpp)
+if (WIN32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE dpp::dpp)
+elseif (UNIX)
+    target_link_libraries(${PROJECT_NAME} PRIVATE dpp)
+endif()
