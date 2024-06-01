@@ -120,5 +120,9 @@ namespace ProcessHandler {
       cv.notify_one();
       if(thread.joinable()) thread.join();
     }
+
+    void WindowsProcessManager::takeScreenshot() {
+
+    }
 } // ProcessHandler
 #endif
