@@ -50,4 +50,22 @@ namespace GUI {
         table->removeRow(currentIndex.row());
         emit dataChanged();
     }
+
+    std::vector<Anomaly> AnomalyManager::extractAnomalies() {
+        std::vector<Anomaly> data;
+        for (int i = 0; i < table->rowCount(); ++i) {
+            QTableWidgetItem* itemPath = table->item(i, 0);
+            QTableWidgetItem* itemMessage = table->item(i, 1);
+            QTableWidgetItem* itemPercentage = table->item(i, 2);
+
+            if (itemPath && itemMessage && itemPercentage) {
+                std::string image_path = itemPath->text().toStdString();
+                std::string message = itemMessage->text().toStdString();
+                data.emplace_back(Anomaly{image_path, message, itemPercentage->text().toInt()});
+            }
+        }
+        return data;
+    }
+
+
 } // GUI

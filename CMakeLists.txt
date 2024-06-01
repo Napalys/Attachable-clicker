@@ -25,6 +25,7 @@ find_package(Qt5 COMPONENTS Widgets REQUIRED)
 add_subdirectory(clicker)
 add_subdirectory(discord)
 add_subdirectory(configured_files)
+add_subdirectory(imaging)
 
 add_executable(${PROJECT_NAME} main.cpp
         gui/mainwindow.cpp
@@ -42,6 +43,8 @@ add_executable(${PROJECT_NAME} main.cpp
         gui/managers/anomaly_manager.h
         gui/dialogs/add_anomaly_dialog.cpp
         gui/dialogs/add_anomaly_dialog.h
+        gui/managers/anomaly_runner.cpp
+        gui/managers/anomaly_runner.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE gui)
@@ -49,6 +52,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt5::Widgets
         clicker_lib
         Notifier
+        Imaging
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

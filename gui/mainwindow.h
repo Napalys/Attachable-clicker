@@ -7,6 +7,7 @@
 #include "managers/table_manager.h"
 #include "discord_bot.h"
 #include "managers/anomaly_manager.h"
+#include "managers/anomaly_runner.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -62,7 +63,8 @@ private:
     std::unique_ptr<GUI::TableManager> table_manager;
     std::unique_ptr<GUI::AnomalyManager> anomaly_manager;
     std::unique_ptr<Clicker> clicker = nullptr;
-    std::unique_ptr<Notification::DiscordBot> bot = nullptr;
+    std::unique_ptr<Runners::AnomalyRunner> anomaly_runner = nullptr;
+    std::shared_ptr<Notification::DiscordBot> bot = nullptr;
     bool isRecording = false;
 };
 

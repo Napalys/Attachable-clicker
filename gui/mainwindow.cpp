@@ -89,6 +89,11 @@ void MainWindow::enableClicker(){
     ui->pushButton_Start->setText("Stop");
     clicker->addRoutine(keyEvents);
     clicker->startRoutines();
+    if(bot) {
+        anomaly_runner = std::make_unique<Runners::AnomalyRunner>(clicker->process_manager, bot,
+                                                                  ui->lineEdit_channel_id->text().toStdString(), anomaly_manager->extractAnomalies());
+        anomaly_runner->run();
+    }
 }
 
 void MainWindow::disableClicker(){
@@ -96,6 +101,7 @@ void MainWindow::disableClicker(){
     ui->pushButton_Start->setText("Start");
     createErrorBox("Waiting for clicker to finish task, This may take up to max declared ms");
     clicker->stopRoutines();
+    anomaly_manager = nullptr;
 }
 
 
@@ -317,7 +323,7 @@ void MainWindow::on_pushButton_Register_Bot_clicked() {
             const auto token = ui->lineEdit_bot_token->text().toStdString();
             const auto chan_id = ui->lineEdit_channel_id->text().toStdString();
 
-            bot = std::make_unique<Notification::DiscordBot>(token, [](const std::string &s) {
+            bot = std::make_shared<Notification::DiscordBot>(token, [](const std::string &s) {
                 std::cout << s << std::endl;
             });
             bot->run();

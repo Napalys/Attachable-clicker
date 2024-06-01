@@ -8,7 +8,9 @@
 #include <QObject>
 #include <QTableWidget>
 #include <variant>
+#include <thread>
 #include "clicker_data.h"
+#include "anomaly.h"
 
 namespace GUI {
     class AnomalyManager : public QObject {
@@ -18,9 +20,11 @@ namespace GUI {
 
         void setupTable();
 
-        void addRow(const std::string& image_path, const std::string& message, const int percentage);
+        void addRow(const std::string& image_path, const std::string& message, int percentage);
 
         void deleteSelectedRow() noexcept;
+
+        std::vector<Anomaly> extractAnomalies();
 
     signals:
         void dataChanged();
