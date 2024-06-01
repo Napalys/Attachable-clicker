@@ -101,7 +101,7 @@ void MainWindow::disableClicker(){
     ui->pushButton_Start->setText("Start");
     createErrorBox("Waiting for clicker to finish task, This may take up to max declared ms");
     clicker->stopRoutines();
-    anomaly_manager = nullptr;
+    anomaly_runner = nullptr;
 }
 
 
