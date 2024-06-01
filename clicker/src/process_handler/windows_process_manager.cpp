@@ -121,7 +121,7 @@ namespace ProcessHandler {
       if(thread.joinable()) thread.join();
     }
 
-    void WindowsProcessManager::takeScreenshot() {
+    std::string WindowsProcessManager::takeScreenshot() {
 
     }
 } // ProcessHandler
