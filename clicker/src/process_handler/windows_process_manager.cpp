@@ -98,7 +98,7 @@ namespace ProcessHandler {
 
     void HoldKey::startWorker() {
       const auto lam = [this] {
-          std::unique_lock<std::mutex> lock(this->mtx, std::defer_lock);
+          std::unique_lock<std::mutex> lock(this->mtx);
           while (this->running) {
             this->cv.wait(lock, [this]{ return pressed || !this->running; });
             while (pressed && this->running) {
