@@ -5,10 +5,13 @@
 #include "process_handler/keyboard_callback.h"
 #include <thread>
 #include <QFileDialog>
+#include <QThread>
 #include <QTextStream>
 #include "dialogs/clicker_data_dialog.h"
 #include "config.hpp"
 #include "discord_bot.h"
+#include "dialogs/loading_dialog.h"
+#include <QtConcurrent/QtConcurrent>
 
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
@@ -268,20 +271,60 @@ void MainWindow::loadRoutineData() {
     if(error)createErrorBox("Error in JSON data: Missing or invalid 'type' key.");
 }
 
+void MainWindow::setNotificationConnected() {
+    ui->pushButton_Register_Bot->setEnabled(false);
+    ui->pushButton_Register_Bot->setAutoFillBackground(true);
+    ui->pushButton_Register_Bot->setStyleSheet("background-color: rgb(50, 165, 89); color: rgb(255, 255, 255)");
+    ui->pushButton_Register_Bot->setText("Bot connected");
+    ui->lineEdit_bot_token->setDisabled(true);
+    ui->lineEdit_channel_id->setDisabled(true);
+}
+
 void MainWindow::on_pushButton_Register_Bot_clicked() {
-    std::cout << "presed" << std::endl;
+    if (ui->lineEdit_channel_id->text().isEmpty()) {
+        createErrorBox("Please add channel id");
+        return;
+    }
 
     if (!bot) {
-        try{
-            bot = std::make_unique<Notification::DiscordBot>("", [](const std::string& s){
-                std::cout << s << std::endl;
-            });
-            bot->run();
+        auto *loadingDialog = new GUI::Dialogs::LoadingDialog(this);
+        loadingDialog->setAttribute(Qt::WA_DeleteOnClose);
+        loadingDialog->show();
 
-        }catch (const std::exception& e){
-            bot = nullptr;
-            createErrorBox(e.what());
-        }
+        QtConcurrent::run([this, loadingDialog]() {
+            try {
+                const auto token = ui->lineEdit_bot_token->text().toStdString();
+                const auto chan_id = ui->lineEdit_channel_id->text().toStdString();
 
+                bot = std::make_unique<Notification::DiscordBot>(token, [](const std::string &s) {
+                                                                     std::cout << s << std::endl;
+                                                                 });
+                bot->run();
+                bot->send_message(chan_id, "Successfully connected",
+                                  [this, loadingDialog](bool success, const std::string &err) {
+                                      QMetaObject::invokeMethod(this, [this, success, err, loadingDialog]() {
+                                          if (!success) {
+                                              createErrorBox(err);
+                                              bot = nullptr;
+                                          } else {
+                                              setNotificationConnected();
+                                          }
+                                          loadingDialog->accept();
+                                          loadingDialog->deleteLater();
+
+                                      });
+                                  });
+            } catch (const std::exception &e) {
+                QMetaObject::invokeMethod(this, "createErrorBoxQStr", Qt::QueuedConnection,
+                                          Q_ARG(QString, QString::fromStdString(e.what())));
+                bot = nullptr;
+                loadingDialog->accept();
+                loadingDialog->deleteLater();
+            }
+        });
     }
+}
+
+void MainWindow::createErrorBoxQStr(const QString &errorMsg) {
+    QMessageBox::warning(this, "Error", errorMsg);
 }

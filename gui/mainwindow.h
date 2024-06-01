@@ -36,11 +36,14 @@ private slots:
     void on_pushButton_record_clicked();
     void on_pushButton_select_window_clicked();
     void on_pushButton_Register_Bot_clicked();
+    void createErrorBoxQStr(const QString &errorMsg);
 
 private:
     void saveRoutineData();
     void loadRoutineData();
     void setPIDFoundSuccessful();
+    void setNotificationConnected();
+    void setNotificationDisconnected();
     void enableKeyStrokeRecording();
     void disableKeyStrokeRecording();
     void enableClicker();

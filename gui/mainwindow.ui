@@ -269,13 +269,32 @@
      <property name="geometry">
       <rect>
        <x>150</x>
-       <y>30</y>
+       <y>40</y>
        <width>101</width>
        <height>23</height>
       </rect>
      </property>
      <property name="text">
       <string>Register bot</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_channel_id">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>60</y>
+       <width>131</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="placeholderText">
+      <string>Channel id</string>
      </property>
     </widget>
    </widget>
