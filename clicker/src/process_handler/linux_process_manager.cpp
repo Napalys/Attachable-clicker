@@ -13,7 +13,7 @@ namespace ProcessHandler {
     }
 
     std::string LinuxProcessManager::takeScreenshot() {
-
+        return "";
     }
 } // ProcessHandler
 #endif

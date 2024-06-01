@@ -359,5 +359,6 @@ void MainWindow::on_pushButton_add_anomaly_clicked() {
 }
 
 void MainWindow::on_pushButton_remove_anomaly_clicked() {
-    anomaly_manager->deleteSelectedRow();
+    clicker->process_manager->takeScreenshot();
+//    anomaly_manager->deleteSelectedRow();
 }
