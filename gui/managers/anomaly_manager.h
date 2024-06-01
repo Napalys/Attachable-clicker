@@ -22,6 +22,8 @@ namespace GUI {
 
         void addRow(const std::string& image_path, const std::string& message, int percentage);
 
+        void addRow(const Anomaly& anomaly);
+
         void deleteSelectedRow() noexcept;
 
         std::vector<Anomaly> extractAnomalies();

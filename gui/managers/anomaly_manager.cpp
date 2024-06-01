@@ -11,6 +11,8 @@ namespace GUI {
 
 
     void AnomalyManager::setupTable() {
+        table->clear();
+        table->setRowCount(0);
         table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
         table->setSelectionMode(QAbstractItemView::SingleSelection);
         table->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -65,6 +67,10 @@ namespace GUI {
             }
         }
         return data;
+    }
+
+    void AnomalyManager::addRow(const Anomaly &anomaly) {
+        addRow(anomaly.template_image, anomaly.message, anomaly.coefficient);
     }
 
 

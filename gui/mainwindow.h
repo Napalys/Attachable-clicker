@@ -66,6 +66,7 @@ private:
     std::unique_ptr<Runners::AnomalyRunner> anomaly_runner = nullptr;
     std::shared_ptr<Notification::DiscordBot> bot = nullptr;
     bool isRecording = false;
+    QString originalWindowTitle;
 };
 
 #endif // MAINWINDOW_H

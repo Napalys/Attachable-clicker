@@ -28,6 +28,7 @@ void MainWindow::initializeUI() {
     setWindowTitle(QString("%1 %2").arg(InjectionClicker::cmake::project_name.data(), InjectionClicker::cmake::project_version.data()));
     ui->label->setEnabled(true);
     ui->label->setOpenExternalLinks(true);
+    originalWindowTitle = windowTitle();
     loadSettings();
 }
 
@@ -206,6 +207,11 @@ void MainWindow::saveRoutineData() {
         }, action));
     }
 
+    auto extracted_anomalies = anomaly_manager->extractAnomalies();
+    for (auto &anomaly: extracted_anomalies) {
+        jsonData["anomalies"].push_back(anomaly);
+    }
+
     const auto initialDir = QDir::currentPath() + "/Routines";
     QDir().mkpath(initialDir);
     QString defaultFileName = initialDir + "/Untitled.json";
@@ -248,6 +254,9 @@ void MainWindow::loadRoutineData() {
         return;
     }
 
+    QFileInfo fileInfo(file.fileName());
+    QString fileTitle = fileInfo.fileName();
+
     QTextStream in(&file);
     std::string rawData = in.readAll().toStdString();
     file.close();
@@ -268,6 +277,19 @@ void MainWindow::loadRoutineData() {
         createErrorBox("Error in JSON structure: Missing or invalid 'routine' key.");
         return;
     }
+    if(jsonData.contains("anomalies")){
+        anomaly_manager->setupTable();
+        for (const auto& anomaly : jsonData["anomalies"]) {
+            if (anomaly.contains("template_image") && anomaly.contains("message") && anomaly.contains("coefficient"))
+                anomaly_manager->addRow(anomaly);
+            else{
+                createErrorBox("Failed loading anomalies. Missing fields.");
+                return;
+            }
+        }
+    }
+
+
 
 
     table_manager->setupTable();
@@ -296,6 +318,7 @@ void MainWindow::loadRoutineData() {
         }
     }
     if(error)createErrorBox("Error in JSON data: Missing or invalid 'type' key.");
+    setWindowTitle(originalWindowTitle + " " + fileTitle);
 }
 
 void MainWindow::setNotificationConnected() {

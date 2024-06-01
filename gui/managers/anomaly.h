@@ -6,6 +6,7 @@
 #define INJECTIONCLICKER_ANOMALY_H
 
 #include <string>
+#include "nlohmann/json.hpp"
 
 using Percentage = int;
 
@@ -14,6 +15,7 @@ struct Anomaly {
     std::string message;
     Percentage coefficient;
 };
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Anomaly, template_image, message, coefficient)
 
 
 #endif //INJECTIONCLICKER_ANOMALY_H
