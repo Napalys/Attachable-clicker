@@ -59,7 +59,7 @@ namespace GUI {
             QTableWidgetItem* itemPercentage = table->item(i, 2);
 
             if (itemPath && itemMessage && itemPercentage) {
-                std::string image_path = itemPath->text().toStdString();
+                std::string image_path = std::string("anomalies/") + itemPath->text().toStdString();
                 std::string message = itemMessage->text().toStdString();
                 data.emplace_back(Anomaly{image_path, message, itemPercentage->text().toInt()});
             }

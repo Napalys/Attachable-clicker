@@ -36,12 +36,19 @@ namespace ImageProcessing {
 
         auto [minVal, minLoc] = perform(img_hsv, templ_hsv);
 
-        std::cout << "Minimum value (error score): " << minVal << std::endl;
         if (minVal >= threshold) {
             cv::rectangle(img, minLoc, cv::Point(minLoc.x + templ.cols, minLoc.y + templ.rows), cv::Scalar(0, 255, 0), 2, 8, 0);
-            cv::imwrite("detection.bmp", img);
+            std::string confidence_text = "Confidence: " + std::to_string(minVal * 100) + "%";
+
+            int font = cv::FONT_HERSHEY_SIMPLEX;
+            double font_scale = 0.5;
+            int thickness = 1;
+            cv::Point text_origin(minLoc.x, minLoc.y - 10);
+            cv::putText(img, confidence_text, text_origin, font, font_scale, cv::Scalar(0, 255, 0), thickness, 8, false);
+            const static std::string file_name = "detection.png";
+            cv::imwrite(file_name, img);
             std::cout << "Match found with adjusted confidence: " << (minVal) * 100 << "%" << std::endl;
-            return "detection.bmp";
+            return file_name;
         }
         return "";
     }
