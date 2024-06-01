@@ -5,7 +5,6 @@
 #include "process_handler/keyboard_callback.h"
 #include <thread>
 #include <QFileDialog>
-#include <QThread>
 #include <QTextStream>
 #include "dialogs/clicker_data_dialog.h"
 #include "config.hpp"
@@ -26,11 +25,30 @@ void MainWindow::initializeUI() {
     setWindowTitle(QString("%1 %2").arg(InjectionClicker::cmake::project_name.data(), InjectionClicker::cmake::project_version.data()));
     ui->label->setEnabled(true);
     ui->label->setOpenExternalLinks(true);
+    loadSettings();
 }
+
+void MainWindow::loadSettings() {
+    QSettings settings("NoName", "InjectionClicker");
+    QString token = settings.value("bot_token", "").toString();
+    QString chan_id = settings.value("channel_id", "").toString();
+    ui->lineEdit_bot_token->setText(token);
+    ui->lineEdit_channel_id->setText(chan_id);
+}
+
+void MainWindow::saveSettings() {
+    QSettings settings("NoName", "InjectionClicker");
+    settings.setValue("bot_token", ui->lineEdit_bot_token->text());
+    settings.setValue("channel_id", ui->lineEdit_channel_id->text());
+}
+
 
 void MainWindow::connectSignals() {
     connect(ui->actionSave, &QAction::triggered, this, &MainWindow::saveRoutineData);
     connect(ui->actionLoad, &QAction::triggered, this, &MainWindow::loadRoutineData);
+    connect(ui->lineEdit_bot_token, &QLineEdit::textChanged, this, &MainWindow::saveSettings);
+    connect(ui->lineEdit_channel_id, &QLineEdit::textChanged, this, &MainWindow::saveSettings);
+
     qRegisterMetaType<QItemSelection>();
 }
 
@@ -286,43 +304,42 @@ void MainWindow::on_pushButton_Register_Bot_clicked() {
         return;
     }
 
-    if (!bot) {
-        auto *loadingDialog = new GUI::Dialogs::LoadingDialog(this);
-        loadingDialog->setAttribute(Qt::WA_DeleteOnClose);
-        loadingDialog->show();
+    if (bot) return;
+    auto *loadingDialog = new GUI::Dialogs::LoadingDialog(this);
+    loadingDialog->setAttribute(Qt::WA_DeleteOnClose);
+    loadingDialog->show();
 
-        QtConcurrent::run([this, loadingDialog]() {
-            try {
-                const auto token = ui->lineEdit_bot_token->text().toStdString();
-                const auto chan_id = ui->lineEdit_channel_id->text().toStdString();
+    QtConcurrent::run([this, loadingDialog]() {
+        try {
+            const auto token = ui->lineEdit_bot_token->text().toStdString();
+            const auto chan_id = ui->lineEdit_channel_id->text().toStdString();
 
-                bot = std::make_unique<Notification::DiscordBot>(token, [](const std::string &s) {
-                                                                     std::cout << s << std::endl;
-                                                                 });
-                bot->run();
-                bot->send_message(chan_id, "Successfully connected",
-                                  [this, loadingDialog](bool success, const std::string &err) {
-                                      QMetaObject::invokeMethod(this, [this, success, err, loadingDialog]() {
-                                          if (!success) {
-                                              createErrorBox(err);
-                                              bot = nullptr;
-                                          } else {
-                                              setNotificationConnected();
-                                          }
-                                          loadingDialog->accept();
-                                          loadingDialog->deleteLater();
+            bot = std::make_unique<Notification::DiscordBot>(token, [](const std::string &s) {
+                std::cout << s << std::endl;
+            });
+            bot->run();
+            bot->send_message(chan_id, "Successfully connected",
+                              [this, loadingDialog](bool success, const std::string &err) {
+                                  QMetaObject::invokeMethod(this, [this, success, err, loadingDialog]() {
+                                      if (!success) {
+                                          createErrorBox(err);
+                                          bot = nullptr;
+                                      } else {
+                                          setNotificationConnected();
+                                      }
+                                      loadingDialog->accept();
+                                      loadingDialog->deleteLater();
 
-                                      });
                                   });
-            } catch (const std::exception &e) {
-                QMetaObject::invokeMethod(this, "createErrorBoxQStr", Qt::QueuedConnection,
-                                          Q_ARG(QString, QString::fromStdString(e.what())));
-                bot = nullptr;
-                loadingDialog->accept();
-                loadingDialog->deleteLater();
-            }
-        });
-    }
+                              });
+        } catch (const std::exception &e) {
+            QMetaObject::invokeMethod(this, "createErrorBoxQStr", Qt::QueuedConnection,
+                                      Q_ARG(QString, QString::fromStdString(e.what())));
+            bot = nullptr;
+            loadingDialog->accept();
+            loadingDialog->deleteLater();
+        }
+    });
 }
 
 void MainWindow::createErrorBoxQStr(const QString &errorMsg) {

@@ -50,6 +50,8 @@ private:
     void disableClicker();
     void initializeUI();
     void connectSignals();
+    void loadSettings();
+    void saveSettings();
     static void createErrorBox(const std::string &errorMsg);
 
 private:
