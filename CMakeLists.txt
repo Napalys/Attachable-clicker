@@ -38,6 +38,10 @@ add_executable(${PROJECT_NAME} main.cpp
         gui/managers/table_manager.h
         gui/dialogs/loading_dialog.cpp
         gui/dialogs/loading_dialog.h
+        gui/managers/anomaly_manager.cpp
+        gui/managers/anomaly_manager.h
+        gui/dialogs/add_anomaly_dialog.cpp
+        gui/dialogs/add_anomaly_dialog.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE gui)

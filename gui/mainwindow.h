@@ -6,6 +6,7 @@
 #include "clicker.h"
 #include "managers/table_manager.h"
 #include "discord_bot.h"
+#include "managers/anomaly_manager.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -36,6 +37,8 @@ private slots:
     void on_pushButton_record_clicked();
     void on_pushButton_select_window_clicked();
     void on_pushButton_Register_Bot_clicked();
+    void on_pushButton_add_anomaly_clicked();
+    void on_pushButton_remove_anomaly_clicked();
     void createErrorBoxQStr(const QString &errorMsg);
 
 private:
@@ -57,6 +60,7 @@ private:
 private:
     Ui::MainWindow *ui;
     std::unique_ptr<GUI::TableManager> table_manager;
+    std::unique_ptr<GUI::AnomalyManager> anomaly_manager;
     std::unique_ptr<Clicker> clicker = nullptr;
     std::unique_ptr<Notification::DiscordBot> bot = nullptr;
     bool isRecording = false;

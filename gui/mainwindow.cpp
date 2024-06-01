@@ -10,6 +10,7 @@
 #include "config.hpp"
 #include "discord_bot.h"
 #include "dialogs/loading_dialog.h"
+#include "dialogs/add_anomaly_dialog.h"
 #include <QtConcurrent/QtConcurrent>
 
 
@@ -21,7 +22,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
 void MainWindow::initializeUI() {
     table_manager = std::make_unique<GUI::TableManager>(ui->tableWidget);
+    anomaly_manager = std::make_unique<GUI::AnomalyManager>(ui->tableWidget_anomaly);
     table_manager->setupTable();
+    anomaly_manager->setupTable();
     setWindowTitle(QString("%1 %2").arg(InjectionClicker::cmake::project_name.data(), InjectionClicker::cmake::project_version.data()));
     ui->label->setEnabled(true);
     ui->label->setOpenExternalLinks(true);
@@ -344,4 +347,17 @@ void MainWindow::on_pushButton_Register_Bot_clicked() {
 
 void MainWindow::createErrorBoxQStr(const QString &errorMsg) {
     QMessageBox::warning(this, "Error", errorMsg);
+}
+
+void MainWindow::on_pushButton_add_anomaly_clicked() {
+    GUI::Dialogs::AddAnomalyDialog dialog;
+    if (dialog.exec() == QDialog::Accepted) {
+        anomaly_manager->addRow(dialog.getImagePath().toStdString(),
+               dialog.getMessage().toStdString(),
+               dialog.getPercentage());
+    }
+}
+
+void MainWindow::on_pushButton_remove_anomaly_clicked() {
+
 }
