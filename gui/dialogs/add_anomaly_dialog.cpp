@@ -53,7 +53,7 @@ namespace GUI::Dialogs {
 
             QFile::copy(file, newFilePath);
 
-            imagePathEdit->setText(filename);
+            imagePathEdit->setText("anomalies/" + filename);
         }
     }
 

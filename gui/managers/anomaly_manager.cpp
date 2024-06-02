@@ -4,6 +4,7 @@
 
 #include "anomaly_manager.h"
 #include <QHeaderView>
+#include <QScrollBar>
 
 namespace GUI {
     AnomalyManager::AnomalyManager(QTableWidget *table) : table(table) {
@@ -24,6 +25,13 @@ namespace GUI {
         table->setColumnWidth(1, static_cast<int>(totalWidth * 0.4));
         table->setColumnWidth(2, static_cast<int>(totalWidth * 0.1));
         table->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+
+        QStringList headers = {"Image", "Message", "Percent"};
+        for (int i = 0; i < headers.size(); ++i) {
+            auto *headerItem = new QTableWidgetItem(headers[i]);
+            headerItem->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+            table->setHorizontalHeaderItem(i, headerItem);
+        }
     }
 
 
@@ -33,9 +41,11 @@ namespace GUI {
         table->insertRow(row);
         auto *path = new QTableWidgetItem(QString::fromStdString(image_path));
         path->setFlags(path->flags() ^ Qt::ItemIsEditable);
+        path->setToolTip(QString::fromStdString(image_path));
 
         auto *msg = new QTableWidgetItem(QString::fromStdString(message));
         msg->setFlags(msg->flags() ^ Qt::ItemIsEditable);
+        path->setToolTip(QString::fromStdString(message));
 
         auto *percent = new QTableWidgetItem(QString::number(percentage));
         percent->setFlags(percent->flags() ^ Qt::ItemIsEditable);
@@ -61,7 +71,7 @@ namespace GUI {
             QTableWidgetItem* itemPercentage = table->item(i, 2);
 
             if (itemPath && itemMessage && itemPercentage) {
-                std::string image_path = std::string("anomalies/") + itemPath->text().toStdString();
+                std::string image_path = itemPath->text().toStdString();
                 std::string message = itemMessage->text().toStdString();
                 data.emplace_back(Anomaly{image_path, message, itemPercentage->text().toInt()});
             }

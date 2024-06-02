@@ -350,7 +350,7 @@ void MainWindow::on_pushButton_Register_Bot_clicked() {
                 std::cout << s << std::endl;
             });
             bot->run();
-            bot->send_message(chan_id, "Successfully connected",
+            bot->send_message(chan_id, "Successfully connected: " + windowTitle().toStdString(),
                               [this, loadingDialog](bool success, const std::string &err) {
                                   QMetaObject::invokeMethod(this, [this, success, err, loadingDialog]() {
                                       if (!success) {
