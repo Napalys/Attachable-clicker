@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <vector>
+#include <fstream>
 #include "process_handler/windows_process_manager.h"
 
 HWND receiveHWND(const uint32_t &dwProcessID, const std::string &processName) {
@@ -17,7 +18,7 @@ HWND receiveHWND(const uint32_t &dwProcessID, const std::string &processName) {
             vhWnds.emplace_back(hCurWnd);  // add the found hCurWnd to the vector
 
             std::wstring title(GetWindowTextLength(hCurWnd) + 1, L'\0');
-            GetWindowTextW(hCurWnd, &title[0], title.size());
+            GetWindowTextW(hCurWnd, &title[0], static_cast<int>(title.size()));
             std::string str(title.begin(), title.end());
             if (str.find(processName) != std::string::npos)
                 targetWindow = hCurWnd;
@@ -35,7 +36,7 @@ HWND receiveHWND(const uint32_t &dwProcessID, const std::string &processName) {
 
     for (auto &hwnd: vhWnds) {
         std::wstring title(GetWindowTextLength(hwnd) + 1, L'\0');
-        GetWindowTextW(hwnd, &title[0], title.size());
+        GetWindowTextW(hwnd, &title[0], static_cast<int>(title.size()));
         std::string str(title.begin(), title.end());
         //remove string terminator, thus after converting to char we do not lose data
         str.erase(std::find(str.begin(), str.end(), '\0'), str.end());
@@ -97,7 +98,7 @@ namespace ProcessHandler {
 
     void HoldKey::startWorker() {
       const auto lam = [this] {
-          std::unique_lock<std::mutex> lock(this->mtx, std::defer_lock);
+          std::unique_lock<std::mutex> lock(this->mtx);
           while (this->running) {
             this->cv.wait(lock, [this]{ return pressed || !this->running; });
             while (pressed && this->running) {
@@ -120,5 +121,73 @@ namespace ProcessHandler {
       cv.notify_one();
       if(thread.joinable()) thread.join();
     }
+
+    std::string WindowsProcessManager::takeScreenshot() {
+        HDC hdcWindow = GetDC(hwnd);
+        HDC hdcMemDC = CreateCompatibleDC(hdcWindow);
+
+        RECT rc;
+        GetClientRect(hwnd, &rc);
+
+        HBITMAP hbmScreen = CreateCompatibleBitmap(hdcWindow, rc.right - rc.left, rc.bottom - rc.top);
+        SelectObject(hdcMemDC, hbmScreen);
+
+        if (!PrintWindow(hwnd, hdcMemDC, PW_CLIENTONLY)) {
+            std::cerr << "Failed to capture window!" << std::endl;
+            return "";
+        }
+
+        BITMAP bmpScreen;
+        GetObject(hbmScreen, sizeof(BITMAP), &bmpScreen);
+
+        BITMAPFILEHEADER bmfHeader;
+        BITMAPINFOHEADER bi;
+
+        bi.biSize = sizeof(BITMAPINFOHEADER);
+        bi.biWidth = bmpScreen.bmWidth;
+        bi.biHeight = bmpScreen.bmHeight;
+        bi.biPlanes = 1;
+        bi.biBitCount = 32;
+        bi.biCompression = BI_RGB;
+        bi.biSizeImage = 0;
+        bi.biXPelsPerMeter = 0;
+        bi.biYPelsPerMeter = 0;
+        bi.biClrUsed = 0;
+        bi.biClrImportant = 0;
+
+        DWORD dwBmpSize = ((bmpScreen.bmWidth * bi.biBitCount + 31) / 32) * 4 * bmpScreen.bmHeight;
+
+        HANDLE hDIB = GlobalAlloc(GHND, dwBmpSize);
+        char *lpbitmap = (char *)GlobalLock(hDIB);
+
+        GetDIBits(hdcWindow, hbmScreen, 0, (UINT)bmpScreen.bmHeight, lpbitmap, (BITMAPINFO *)&bi, DIB_RGB_COLORS);
+        DWORD pid = GetCurrentProcessId();
+
+        std::string filename = "screenshot_" + std::to_string(pid) + ".bmp";
+
+        HANDLE hFile = CreateFile(filename.data(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+        DWORD dwSizeofDIB = dwBmpSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+
+        bmfHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+        bmfHeader.bfSize = dwSizeofDIB;
+        bmfHeader.bfType = 0x4D42;
+
+        DWORD dwBytesWritten = 0;
+        WriteFile(hFile, (LPSTR)&bmfHeader, sizeof(BITMAPFILEHEADER), &dwBytesWritten, NULL);
+        WriteFile(hFile, (LPSTR)&bi, sizeof(BITMAPINFOHEADER), &dwBytesWritten, NULL);
+        WriteFile(hFile, (LPSTR)lpbitmap, dwBmpSize, &dwBytesWritten, NULL);
+
+        GlobalUnlock(hDIB);
+        GlobalFree(hDIB);
+        CloseHandle(hFile);
+
+        DeleteObject(hbmScreen);
+        DeleteObject(hdcMemDC);
+        ReleaseDC(hwnd, hdcWindow);
+        return filename;
+    }
+
+
 } // ProcessHandler
 #endif

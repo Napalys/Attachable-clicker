@@ -15,6 +15,8 @@ namespace ProcessHandler {
         LinuxProcessManager(uint32_t dwProcessID, const std::string& processName);
 
         void sendClick(ClickerData clicker_data) override;
+
+        std::string takeScreenshot() override;
     };
 
 } // ProcessHandler

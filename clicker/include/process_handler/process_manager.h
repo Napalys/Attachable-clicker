@@ -13,6 +13,7 @@ namespace ProcessHandler {
     public:
         virtual ~ProcessManager() = default;
         virtual void sendClick(ClickerData clicker_data) = 0;
+        virtual std::string takeScreenshot() = 0;
     };
 }
 #endif //INJECTIONCLICKER_PROCCESS_MANAGER_H

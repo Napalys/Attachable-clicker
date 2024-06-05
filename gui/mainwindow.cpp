@@ -8,6 +8,10 @@
 #include <QTextStream>
 #include "dialogs/clicker_data_dialog.h"
 #include "config.hpp"
+#include "discord_bot.h"
+#include "dialogs/loading_dialog.h"
+#include "dialogs/add_anomaly_dialog.h"
+#include <QtConcurrent/QtConcurrent>
 
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
@@ -17,16 +21,38 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 }
 
 void MainWindow::initializeUI() {
-    tableManager = std::make_unique<GUI::TableManager>(ui->tableWidget);
-    tableManager->setupTable();
+    table_manager = std::make_unique<GUI::TableManager>(ui->tableWidget);
+    anomaly_manager = std::make_unique<GUI::AnomalyManager>(ui->tableWidget_anomaly);
+    table_manager->setupTable();
+    anomaly_manager->setupTable();
     setWindowTitle(QString("%1 %2").arg(InjectionClicker::cmake::project_name.data(), InjectionClicker::cmake::project_version.data()));
     ui->label->setEnabled(true);
     ui->label->setOpenExternalLinks(true);
+    originalWindowTitle = windowTitle();
+    loadSettings();
 }
+
+void MainWindow::loadSettings() {
+    QSettings settings("NoName", "InjectionClicker");
+    QString token = settings.value("bot_token", "").toString();
+    QString chan_id = settings.value("channel_id", "").toString();
+    ui->lineEdit_bot_token->setText(token);
+    ui->lineEdit_channel_id->setText(chan_id);
+}
+
+void MainWindow::saveSettings() {
+    QSettings settings("NoName", "InjectionClicker");
+    settings.setValue("bot_token", ui->lineEdit_bot_token->text());
+    settings.setValue("channel_id", ui->lineEdit_channel_id->text());
+}
+
 
 void MainWindow::connectSignals() {
     connect(ui->actionSave, &QAction::triggered, this, &MainWindow::saveRoutineData);
     connect(ui->actionLoad, &QAction::triggered, this, &MainWindow::loadRoutineData);
+    connect(ui->lineEdit_bot_token, &QLineEdit::textChanged, this, &MainWindow::saveSettings);
+    connect(ui->lineEdit_channel_id, &QLineEdit::textChanged, this, &MainWindow::saveSettings);
+
     qRegisterMetaType<QItemSelection>();
 }
 
@@ -49,7 +75,7 @@ void MainWindow::on_pushButton_Start_clicked() {
         return;
     }
 
-    if(tableManager->isEmpty()){
+    if(table_manager->isEmpty()){
         createErrorBox("Please add some keys to be clicked");
         return;
     }
@@ -59,11 +85,16 @@ void MainWindow::on_pushButton_Start_clicked() {
 }
 
 void MainWindow::enableClicker(){
-    auto keyEvents = tableManager->extractAllData();
+    auto keyEvents = table_manager->extractAllData();
     clicker->setClickerStatus(true);
     ui->pushButton_Start->setText("Stop");
     clicker->addRoutine(keyEvents);
     clicker->startRoutines();
+    if(bot) {
+        anomaly_runner = std::make_unique<Runners::AnomalyRunner>(clicker->process_manager, bot,
+                                                                  ui->lineEdit_channel_id->text().toStdString(), anomaly_manager->extractAnomalies());
+        anomaly_runner->run();
+    }
 }
 
 void MainWindow::disableClicker(){
@@ -71,6 +102,7 @@ void MainWindow::disableClicker(){
     ui->pushButton_Start->setText("Start");
     createErrorBox("Waiting for clicker to finish task, This may take up to max declared ms");
     clicker->stopRoutines();
+    anomaly_runner = nullptr;
 }
 
 
@@ -97,8 +129,8 @@ void MainWindow::on_pushButton_record_clicked() {
 
 void MainWindow::enableKeyStrokeRecording() {
     try {
-        ProcessHandler::registerCallBack([&](const std::variant<ClickerData, Delay>& data) {
-            tableManager->addRow(data);
+        ProcessHandler::registerCallBack([&](const std::variant<ClickerData, Delay>& action) {
+            table_manager->addRow(action);
         });
     }
     catch (const std::exception &e) {
@@ -153,26 +185,31 @@ void MainWindow::setPIDFoundSuccessful() {
 
 
 void MainWindow::on_pushButton_delete_key_clicked() {
-    tableManager->deleteSelectedRow();
+    table_manager->deleteSelectedRow();
 }
 
 void MainWindow::on_pushButton_insert_key_clicked() {
     GUI::Dialogs::ClickerDataDialog dialog(this);
     if (dialog.exec() != QDialog::Accepted) return;
-    ClickerData data = dialog.getClickerData();
-    tableManager->addRow(data);
+    ClickerData clicker_data = dialog.getClickerData();
+    table_manager->addRow(clicker_data);
 }
 
 void MainWindow::saveRoutineData() {
-    auto allData = tableManager->extractAllData();
+    auto extracted_actions = table_manager->extractAllData();
     nlohmann::json jsonData;
 
     jsonData["version"] = InjectionClicker::cmake::project_version.data();
 
-    for (auto &data: allData) {
+    for (auto &action: extracted_actions) {
         jsonData["routine"].push_back(std::visit([](auto &&arg) -> nlohmann::json {
             return arg;
-        }, data));
+        }, action));
+    }
+
+    auto extracted_anomalies = anomaly_manager->extractAnomalies();
+    for (auto &anomaly: extracted_anomalies) {
+        jsonData["anomalies"].push_back(anomaly);
     }
 
     const auto initialDir = QDir::currentPath() + "/Routines";
@@ -217,6 +254,9 @@ void MainWindow::loadRoutineData() {
         return;
     }
 
+    QFileInfo fileInfo(file.fileName());
+    QString fileTitle = fileInfo.fileName();
+
     QTextStream in(&file);
     std::string rawData = in.readAll().toStdString();
     file.close();
@@ -237,9 +277,22 @@ void MainWindow::loadRoutineData() {
         createErrorBox("Error in JSON structure: Missing or invalid 'routine' key.");
         return;
     }
+    if(jsonData.contains("anomalies")){
+        anomaly_manager->setupTable();
+        for (const auto& anomaly : jsonData["anomalies"]) {
+            if (anomaly.contains("template_image") && anomaly.contains("message") && anomaly.contains("coefficient"))
+                anomaly_manager->addRow(anomaly);
+            else{
+                createErrorBox("Failed loading anomalies. Missing fields.");
+                return;
+            }
+        }
+    }
 
 
-    tableManager->setupTable();
+
+
+    table_manager->setupTable();
     bool error = false;
     for (const auto& item : jsonData["routine"]) {
         if (!item.contains("type") || !item["type"].is_string()) {
@@ -250,13 +303,13 @@ void MainWindow::loadRoutineData() {
         auto type = item["type"].get<std::string>();
         if (type == "ClickerData") {
             if (item.contains("key_name") && item.contains("key_code") && item.contains("event")) {
-                tableManager->addRow(item.get<ClickerData>());
+                table_manager->addRow(item.get<ClickerData>());
             } else {
                 createErrorBox("Missing fields in ClickerData object.");
             }
         } else if (type == "Delay") {
             if (item.contains("delay")) {
-                tableManager->addRow(item.get<Delay>());
+                table_manager->addRow(item.get<Delay>());
             } else {
                 createErrorBox("Missing 'delay' field in Delay object.");
             }
@@ -265,4 +318,76 @@ void MainWindow::loadRoutineData() {
         }
     }
     if(error)createErrorBox("Error in JSON data: Missing or invalid 'type' key.");
+    setWindowTitle(originalWindowTitle + " " + fileTitle);
+}
+
+void MainWindow::setNotificationConnected() {
+    ui->pushButton_Register_Bot->setEnabled(false);
+    ui->pushButton_Register_Bot->setAutoFillBackground(true);
+    ui->pushButton_Register_Bot->setStyleSheet("background-color: rgb(50, 165, 89); color: rgb(255, 255, 255)");
+    ui->pushButton_Register_Bot->setText("Bot connected");
+    ui->lineEdit_bot_token->setDisabled(true);
+    ui->lineEdit_channel_id->setDisabled(true);
+}
+
+void MainWindow::on_pushButton_Register_Bot_clicked() {
+    if (ui->lineEdit_channel_id->text().isEmpty()) {
+        createErrorBox("Please add channel id");
+        return;
+    }
+
+    if (bot) return;
+    auto *loadingDialog = new GUI::Dialogs::LoadingDialog(this);
+    loadingDialog->setAttribute(Qt::WA_DeleteOnClose);
+    loadingDialog->show();
+
+    QtConcurrent::run([this, loadingDialog]() {
+        try {
+            const auto token = ui->lineEdit_bot_token->text().toStdString();
+            const auto chan_id = ui->lineEdit_channel_id->text().toStdString();
+
+            bot = std::make_shared<Notification::DiscordBot>(token, [](const std::string &s) {
+                std::cout << s << std::endl;
+            });
+            bot->run();
+            bot->send_message(chan_id, "Successfully connected: " + windowTitle().toStdString(),
+                              [this, loadingDialog](bool success, const std::string &err) {
+                                  QMetaObject::invokeMethod(this, [this, success, err, loadingDialog]() {
+                                      if (!success) {
+                                          createErrorBox(err);
+                                          bot = nullptr;
+                                      } else {
+                                          setNotificationConnected();
+                                      }
+                                      loadingDialog->accept();
+                                      loadingDialog->deleteLater();
+
+                                  });
+                              });
+        } catch (const std::exception &e) {
+            QMetaObject::invokeMethod(this, "createErrorBoxQStr", Qt::QueuedConnection,
+                                      Q_ARG(QString, QString::fromStdString(e.what())));
+            bot = nullptr;
+            loadingDialog->accept();
+            loadingDialog->deleteLater();
+        }
+    });
+}
+
+void MainWindow::createErrorBoxQStr(const QString &errorMsg) {
+    QMessageBox::warning(this, "Error", errorMsg);
+}
+
+void MainWindow::on_pushButton_add_anomaly_clicked() {
+    GUI::Dialogs::AddAnomalyDialog dialog;
+    if (dialog.exec() == QDialog::Accepted) {
+        anomaly_manager->addRow(dialog.getImagePath().toStdString(),
+               dialog.getMessage().toStdString(),
+               dialog.getPercentage());
+    }
+}
+
+void MainWindow::on_pushButton_remove_anomaly_clicked() {
+    clicker->process_manager->takeScreenshot();
+//    anomaly_manager->deleteSelectedRow();
 }

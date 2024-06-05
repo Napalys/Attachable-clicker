@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QTableWidget>
+#include <variant>
 #include "clicker_data.h"
 
 Q_DECLARE_METATYPE(std::shared_ptr<ClickerData>)
