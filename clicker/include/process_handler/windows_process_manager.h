@@ -42,6 +42,8 @@ namespace ProcessHandler {
 
         void sendClick(ClickerData clicker_data) override;
 
+        std::string takeScreenshot() override;
+
         void stopAll();
 
     private:

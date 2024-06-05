@@ -6,8 +6,10 @@
 
 #include <iostream>
 #include <fcntl.h>
+#ifdef linux
 #include <unistd.h>
 #include <dirent.h>
+#endif
 #include <cstring>
 #include <string>
 #include <thread>
@@ -154,7 +156,7 @@ namespace ProcessHandler {
             auto currentKeyPressTime = std::chrono::steady_clock::now();
             auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(
                     currentKeyPressTime - lastKeyPressTime).count();
-            ClickerData clickerData(pKeyBoard->vkCode, ClickerData::Event::Pressed,
+            ClickerData clickerData(static_cast<uint8_t>(pKeyBoard->vkCode), ClickerData::Event::Pressed,
                                     GetKeyName(pKeyBoard->vkCode));
             safeCallback(Delay(static_cast<uint32_t>(delay)));
             safeCallback(clickerData);
@@ -166,7 +168,7 @@ namespace ProcessHandler {
             auto currentKeyPressTime = std::chrono::steady_clock::now();
             auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(
                     currentKeyPressTime - lastKeyPressTime).count();
-            ClickerData clickerData(pKeyBoard->vkCode, ClickerData::Event::Released,
+            ClickerData clickerData(static_cast<uint8_t>(pKeyBoard->vkCode), ClickerData::Event::Released,
                                     GetKeyName(pKeyBoard->vkCode));
             safeCallback(Delay(static_cast<uint32_t>(delay)));
             safeCallback(clickerData);
@@ -205,7 +207,6 @@ namespace ProcessHandler {
 #ifdef WIN32
             lastKeyPressTime = std::chrono::steady_clock::now();
             SetHook();
-            MSG msg;
 #endif
             keyboard_registered = true;
 

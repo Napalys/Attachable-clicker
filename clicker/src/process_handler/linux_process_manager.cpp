@@ -11,5 +11,9 @@ namespace ProcessHandler {
     void LinuxProcessManager::sendClick(ClickerData clicker_data) {
 
     }
+
+    std::string LinuxProcessManager::takeScreenshot() {
+        return "";
+    }
 } // ProcessHandler
 #endif
