@@ -1,102 +1,38 @@
-name: Compile and Release Qt5 Windows
+name: Deploy windows
 
 on:
   push:
     tags:
       - '*'
-  pull_request:
-    branches:
-      - main
-
-
-env:
-  QT_VERSION: "5.15.2"
-  MINGW_VERSION: "win64_mingw81"
-  MINGW_PATH: "mingw81_64"
-  BUILD_TYPE: Release
 
 jobs:
   build:
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: pwsh
+    runs-on: [self-hosted, Windows, X64]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - name: Cache Qt and MinGW
-        uses: actions/cache@v2
-        with:
-          path: |
-            ${{github.workspace}}/Qt
-            C:/tools/mingw64
-          key: ${{ runner.os }}-qt-${{ env.QT_VERSION }}-mingw-${{ env.MINGW_VERSION }}
-          restore-keys: |
-            ${{ runner.os }}-qt-${{ env.QT_VERSION }}-mingw-${{ env.MINGW_VERSION }}
-
-      - name: Install correct version of mingw
-        if: steps.cache-qt-mingw.outputs.cache-hit != 'true'
-        uses: crazy-max/ghaction-chocolatey@v1
-        with:
-          args: install mingw --version=8.1.0 -y
-
-      - name: Install Qt
-        if: steps.cache-qt-mingw.outputs.cache-hit != 'true'
-        uses: jurplel/install-qt-action@v2
-        with:
-          host: windows
-          target: "desktop"
-          version: ${{ env.QT_VERSION }}
-          arch: ${{ env.MINGW_VERSION }}
-          dir: "${{github.workspace}}/Qt"
-          install-deps: "true"
-
-      - name: Set Qt path and refresh
+      - name: Configure and Build CMake for each OS
         run: |
-          $path = "${{github.workspace}}/Qt/${{ env.QT_VERSION }}/${{ env.MINGW_PATH }}/bin"
-          echo "$path" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
-          Update-SessionEnvironment
-
-      - name: Configure CMake Project
-        working-directory: ${{github.workspace}}
-        run: |
-          $Qt5_DIR="${{github.workspace}}/Qt/${{ env.QT_VERSION }}/${{ env.MINGW_PATH }}/lib/cmake/Qt5"
-          cmake -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DQt5_DIR=$Qt5_DIR -G "MinGW Makefiles" -B ${{github.workspace}}/build
-
-      - name: Build project
-        working-directory: ${{github.workspace}}/build
-        run: |
-          mingw32-make.exe
-
-      - name: Prepare portable program
-        run: |
-          mkdir ${{github.workspace}}/build/artifacts
-          windeployqt.exe ${{github.workspace}}/build/injectionClicker.exe --no-translations --dir ${{github.workspace}}/build/artifacts
-          Copy-Item ${{github.workspace}}/build/injectionClicker.exe ${{github.workspace}}/build/artifacts/
+          cmake -G "Visual Studio 17 2022" -DCMAKE_TOOLCHAIN_FILE=D:/vcpkg/scripts/buildsystems/vcpkg.cmake -B build
+          cmake --build build --config Release
+        shell: cmd
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v2
         with:
-          name: injectionClicker-${{ github.run_number }}
-          path: ${{github.workspace}}/build/artifacts/
-          
+          name: InjectionClicker-${{ github.run_number }}
+          path: build/Release/
+
       - name: Zip the application
         run: |
-          Compress-Archive -Path ${{ github.workspace }}/build/artifacts/* -DestinationPath ${{ github.workspace }}/injectionClicker-${{ github.run_number }}.zip
-      
-      - name: List files in the workspace
-        run: |
-          Get-ChildItem -Path ${{ github.workspace }} -Force | Select-Object Mode, LastWriteTime, Length, Name | Format-Table -AutoSize
-      
-      - name: Create Release
+          Compress-Archive -Path build/Release/* -DestinationPath InjectionClicker-${{ github.run_number }}.zip
+        shell: powershell
+
+      - name: Create and Upload Release
         uses: softprops/action-gh-release@v1
         with:
           name: Release ${{ github.ref_name }}
-          body: Release of version ${{ github.ref_name }}
-          files: ./injectionClicker-${{ github.run_number }}.zip
+          files: ./InjectionClicker-${{ github.run_number }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    
