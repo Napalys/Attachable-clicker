@@ -38,3 +38,6 @@ To begin using the Attachable Clicker, follow these setup steps:
 
 ### Step 5: Start Automation
 - Activate the clicker to begin sending automated clicks to the attached window.
+
+![image](https://github.com/Napalys/Attachable-clicker/assets/11835209/1b2827c2-eb99-4150-8825-957971953884)
+
