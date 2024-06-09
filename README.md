@@ -11,9 +11,60 @@
 
 ## Installation
 
-1. Download the latest release from [Release](https://github.com/Napalys/Attachable-clicker/releases).
+1. Download the latest release from the [Release page](https://github.com/Napalys/Attachable-clicker/releases).
 2. Extract the files to your preferred location on your Windows device.
-3. Run the executable file to launch the application.
+3. Run the executable file to launch the application. Please ensure the software is running with administrator privileges to enable it to send clicks.
+
+## Installation from Source
+
+### Windows
+
+Ensure you have Visual Studio Compiler installed on your Windows machine. If you haven't installed vcpkg yet, follow these steps:
+
+1. Clone the vcpkg repository:
+    ```sh
+    git clone https://github.com/microsoft/vcpkg.git
+    ```
+
+2. Navigate to the vcpkg directory:
+    ```sh
+    cd vcpkg
+    ```
+
+3. Bootstrap vcpkg:
+    ```sh
+    .\bootstrap-vcpkg.bat
+    ```
+
+4. Install dependencies:
+    ```sh
+    vcpkg install opencv dpp qt5
+    ```
+
+To compile the project, follow these steps:
+
+1. Open a command prompt and navigate to the root directory of your project.
+2. Run the following command to configure the project:
+    ```sh
+    cmake -G "Visual Studio 17 2022" -DCMAKE_TOOLCHAIN_FILE=path_to_your_vcpkg/scripts/buildsystems/vcpkg.cmake -B build
+    ```
+
+3. Once the configuration is complete, build the project with:
+    ```sh
+    cmake --build build --config Release
+    ```
+
+### Linux
+
+To get started, follow these steps:
+
+1. Get the Docker image from Docker Hub: [Attachable Clicker Docker Image](https://hub.docker.com/r/napalys/attachable-clicker-docker/tags)
+
+2. Clone the repository inside the Docker container and build the project:
+    ```sh
+    mkdir build && cd build && cmake .. && make
+    ```
+
 
 ## Getting Started
 
