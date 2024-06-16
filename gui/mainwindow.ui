@@ -134,7 +134,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>180</y>
+      <y>50</y>
       <width>261</width>
       <height>131</height>
      </rect>
@@ -234,9 +234,130 @@
      </property>
     </widget>
    </widget>
+   <widget class="QGroupBox" name="notifications">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>200</y>
+      <width>261</width>
+      <height>291</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Notification handler</string>
+    </property>
+    <widget class="QLineEdit" name="lineEdit_bot_token">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>131</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="placeholderText">
+      <string>Bot token</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_Register_Bot">
+     <property name="geometry">
+      <rect>
+       <x>150</x>
+       <y>40</y>
+       <width>101</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Register bot</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="lineEdit_channel_id">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>60</y>
+       <width>131</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="placeholderText">
+      <string>Channel id</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_add_anomaly">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>250</y>
+       <width>101</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Add anomaly</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="pushButton_remove_anomaly">
+     <property name="geometry">
+      <rect>
+       <x>140</x>
+       <y>250</y>
+       <width>101</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Remove</string>
+     </property>
+    </widget>
+    <widget class="QTableWidget" name="tableWidget_anomaly">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>90</y>
+       <width>231</width>
+       <height>141</height>
+      </rect>
+     </property>
+     <column>
+      <property name="text">
+       <string>Image</string>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Message</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Conf</string>
+      </property>
+     </column>
+    </widget>
+   </widget>
    <zorder>injection_windows_group</zorder>
    <zorder>routine_group</zorder>
    <zorder>label</zorder>
+   <zorder>notifications</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

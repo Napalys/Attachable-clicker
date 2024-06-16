@@ -8,15 +8,18 @@ CONFIG += c++11
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
-SOURCES += \
-    clicker.cpp \
-    main.cpp \
-    mainwindow.cpp
-
 HEADERS += \
-    clicker.h \
-    ClickerData.h \
-    mainwindow.h
+    mainwindow.h \
+    managers/table_manager.h \
+    delegates/action_delegate.hpp \
+    delegates/non_editable_delegate.hpp \
+    delegates/numeric_delegate.hpp \
+    dialogs/clicker_data_dialog.h
+
+SOURCES += \
+    mainwindow.cpp \
+    managers/table_manager.cpp \
+    dialogs/clicker_data_dialog.cpp
 
 FORMS += \
     mainwindow.ui

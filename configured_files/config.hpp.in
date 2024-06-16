@@ -1,0 +1,13 @@
+#ifndef InjectionClicker_CONFIG_HPP
+#define InjectionClicker_CONFIG_HPP
+
+namespace InjectionClicker::cmake {
+inline constexpr std::string_view project_name = "@PROJECT_NAME@";
+inline constexpr std::string_view project_version = "v@PROJECT_VERSION@";
+inline constexpr int project_version_major { @PROJECT_VERSION_MAJOR@ };
+inline constexpr int project_version_minor { @PROJECT_VERSION_MINOR@ };
+inline constexpr int project_version_patch { @PROJECT_VERSION_PATCH@ };
+inline constexpr std::string_view git_sha = "@GIT_SHA@";
+}
+
+#endif

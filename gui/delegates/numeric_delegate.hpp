@@ -7,6 +7,7 @@
 
 
 #include <QItemDelegate>
+#include <QLineEdit>
 
 namespace GUI::Delegates {
 
