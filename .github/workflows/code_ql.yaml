@@ -40,13 +40,13 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           category: "/default"
-          output: "codeql-results.sarif"
+          output: "codeql-results/codeql.sarif"
 
       - name: Upload CodeQL results
         uses: actions/upload-artifact@v3
         with:
           name: codeql-results
-          path: codeql-results.sarif
+          path: codeql-results/codeql.sarif
 
       - name: Display CodeQL results
-        run: cat codeql-results.sarif | jq .
+        run: cat codeql-results/codeql.sarif | jq .
