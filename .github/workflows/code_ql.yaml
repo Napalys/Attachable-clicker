@@ -21,6 +21,9 @@ jobs:
       - name: Configure Git Safe Directory
         run: git config --global --add safe.directory /__w/Attachable-clicker/Attachable-clicker
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -43,8 +46,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: codeql-results
-          path: codeql-results.sarif
+          path: build/codeql-results.sarif
 
       - name: Display CodeQL results
-        run: |
-          cat codeql-results.sarif | jq .
+        run: cat build/codeql-results.sarif | jq .
