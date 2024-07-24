@@ -28,6 +28,9 @@ jobs:
           build-mode: manual
 
     steps:
+    - name: Configure git safe directory
+      run: git config --global --add safe.directory /__w/Attachable-clicker/Attachable-clicker
+
     - name: Checkout repository
       uses: actions/checkout@v4
 
@@ -39,6 +42,7 @@ jobs:
 
     - name: Cmake and build
       run: |
+        export LD_PRELOAD=""
         mkdir build
         cd build
         cmake ..
