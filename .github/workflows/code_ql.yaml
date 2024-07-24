@@ -1,4 +1,4 @@
-name: CodeQL
+name: Build and Analyze with CodeQL
 
 on:
   push:
@@ -9,32 +9,29 @@ on:
     - cron: '0 0 * * 1'
 
 jobs:
-  analyze:
+  build-and-analyze:
     runs-on: ubuntu-latest
+    container:
+      image: napalys/attachable-clicker-docker:latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Configure Git
         run: git config --global --add safe.directory /home/runner/work/Attachable-clicker/Attachable-clicker
 
-      - name: List directories before initialization
-        run: ls -al /home/runner/work/_temp/
-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: cpp
-          config-file: .github/codeql/codeql-config.yml
 
-      - name: Build the code
+      - name: Cmake and build
         run: |
-          cmake -S . -B build
-          cmake --build build --config Release
-
-      - name: List directories after initialization
-        run: ls -al /home/runner/work/_temp/codeql_databases
+          mkdir build
+          cd build
+          cmake ..
+          cmake --build . --config Release
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
