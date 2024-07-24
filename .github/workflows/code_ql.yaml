@@ -46,7 +46,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: codeql-results
-          path: build/codeql-results.sarif
+          path: codeql-results.sarif
 
       - name: Display CodeQL results
-        run: cat build/codeql-results.sarif | jq .
+        run: cat codeql-results.sarif | jq .
