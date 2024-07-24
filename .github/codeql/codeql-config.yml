@@ -1,0 +1,13 @@
+queries:
+  - name: Security queries
+    uses: github/codeql/cpp-queries@v1.0.0
+    include:
+      - Security
+  - name: Code Quality queries
+    uses: github/codeql/cpp-queries@v1.0.0
+    include:
+      - CodeQuality
+  - name: Performance queries
+    uses: github/codeql/cpp-queries@v1.0.0
+    include:
+      - Performance
