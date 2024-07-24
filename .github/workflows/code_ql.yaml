@@ -11,8 +11,6 @@ on:
 jobs:
   analyze:
     runs-on: ubuntu-latest
-    container:
-      image: napalys/attachable-clicker-docker:latest
 
     steps:
       - name: Checkout repository
@@ -22,7 +20,7 @@ jobs:
         run: git config --global --add safe.directory /__w/Attachable-clicker/Attachable-clicker
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           languages: cpp
           config-file: .github/codeql/codeql-config.yml
@@ -31,8 +29,13 @@ jobs:
         run: |
           cmake -S . -B build
           cmake --build build --config Release
+          # Ensure build artifacts are where CodeQL expects them
+          cp -r build/* /__w/_temp/codeql_databases/source-root/
+
+      - name: Verify CodeQL Database
+        run: ls -al /__w/_temp/codeql_databases
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
         with:
           category: '/default'
