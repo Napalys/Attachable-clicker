@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
-project(injectionClicker  VERSION 1.0.0
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules")
+include(VersionExtractor)
+
+project(injectionClicker VERSION ${PROJECT_VERSION}
         DESCRIPTION ""
         HOMEPAGE_URL "https://github.com/Napalys/Attachable-clicker"
         LANGUAGES CXX C)
