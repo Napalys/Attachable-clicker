@@ -103,7 +103,7 @@ namespace ProcessHandler {
             this->cv.wait(lock, [this]{ return pressed || !this->running; });
             while (pressed && this->running) {
               sendToHWNDClick(this->hwnd, WM_KEYDOWN, key_code);  // Placeholder for send key functionality
-              std::this_thread::sleep_for(std::chrono::milliseconds(20));
+              std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
             sendToHWNDClick(this->hwnd, WM_KEYUP, key_code);
           }
